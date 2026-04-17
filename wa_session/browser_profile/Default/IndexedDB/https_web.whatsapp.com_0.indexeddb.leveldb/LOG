@@ -1,0 +1,11 @@
+2026/04/18-01:33:24.299 16ec8 Reusing MANIFEST /home/eraly/Downloads/aishackeeeer/wa_session/browser_profile/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/04/18-01:33:24.300 16ec8 Recovering log #26
+2026/04/18-01:33:24.415 16ec8 Reusing old log /home/eraly/Downloads/aishackeeeer/wa_session/browser_profile/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000026.log 
+2026/04/18-01:33:44.514 16ec9 Level-0 table #32: started
+2026/04/18-01:33:44.602 16ec9 Level-0 table #32: 1284701 bytes OK
+2026/04/18-01:33:44.618 16ec9 Delete type=0 #26
+2026/04/18-01:33:44.926 16ecb Compacting 1@1 + 2@2 files
+2026/04/18-01:33:45.208 16ecb Generated table #33@1: 48924 keys, 2218625 bytes
+2026/04/18-01:33:45.268 16ecb Generated table #34@1: 20488 keys, 927876 bytes
+2026/04/18-01:33:45.268 16ecb Compacted 1@1 + 2@2 files => 3146501 bytes
+2026/04/18-01:33:45.275 16ecb compacted to: files[ 0 0 2 0 0 0 0 ]
