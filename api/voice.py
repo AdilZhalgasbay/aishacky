@@ -121,6 +121,50 @@ def parse_tasks_from_audio(audio_bytes: bytes, mime_type: str = "audio/wav") -> 
     return json.loads(raw)
 
 
+def transcribe_audio(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
+    """
+    Транскрибирует аудио-файл в текст без генерации JSON-структуры.
+    """
+    b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+    data_uri = f"data:{mime_type};base64,{b64_audio}"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": "Ты высокоточный транскрибатор. Тонко и точно конвертируй аудио в текст на русском языке. Возвращай только распознанный текст без каких-либо твоих комментариев."},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "audio_url",
+                        "audio_url": {"url": data_uri},
+                    },
+                    {
+                        "type": "text",
+                        "text": "Распознай текст из этого аудио.",
+                    },
+                ],
+            },
+        ],
+        "max_tokens": 1024,
+        "temperature": 0.0,
+        "stream": False,
+    }
+
+    try:
+        response = requests.post(INVOKE_URL, headers=headers, json=payload, timeout=60)
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        print(f"[VOICE] Transcription error: {e}")
+        return "Ошибка распознавания голоса"
+
+
 # ─── Быстрый тест ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     text = (

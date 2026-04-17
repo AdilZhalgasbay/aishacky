@@ -64,6 +64,7 @@ export default function TelegramClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState('')
   const [selectedTeacher, setSelectedTeacher] = useState(TEACHERS[0])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [dbMessages, setDbMessages] = useState<TelegramLogEntry[]>([])
   const [tab, setTab] = useState<'sim' | 'log'>('sim')
@@ -131,6 +132,57 @@ export default function TelegramClient() {
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(inputText) }
+  }
+
+  async function handleAudioUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || loading) return
+    
+    // Clear input
+    e.target.value = ''
+    
+    setLoading(true)
+    const msgId = ++msgCounter.current
+
+    const teacherMsg: ChatMessage = {
+      id: msgId,
+      type: 'teacher',
+      sender: selectedTeacher.name,
+      text: `🎤 Голосовое сообщение (${(file.size / 1024).toFixed(1)} KB)`,
+      timestamp: new Date(),
+    }
+    setMessages(prev => [...prev, teacherMsg])
+
+    try {
+      const formData = new FormData()
+      formData.append('sender_name', selectedTeacher.name)
+      formData.append('file', file)
+
+      const res = await fetch('http://127.0.0.1:8000/telegram/simulate-audio', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+
+      const botMsg: ChatMessage = {
+        id: msgId + 10000,
+        type: 'bot',
+        sender: 'Aqbobek Bot',
+        text: (data.transcribed_text ? `🎙️ Распознано: "${data.transcribed_text}"\n\n` : '') + (data.bot_reply || 'Сообщение получено.'),
+        parsed_type: data.parsed_type,
+        parsed_data: data.parsed_data,
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, botMsg])
+      fetchDbMessages()
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        id: msgId + 20000, type: 'bot', sender: 'Aqbobek Bot',
+        text: 'Ошибка при отправке аудио', timestamp: new Date(),
+      }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -284,6 +336,26 @@ export default function TelegramClient() {
                 onKeyDown={handleKeyDown}
                 disabled={loading}
               />
+
+              <input 
+                type="file" 
+                accept="audio/*" 
+                onChange={handleAudioUpload} 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+              />
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
+                className="btn btn-secondary" 
+                disabled={loading}
+                title="Отправить аудио (голосовое)"
+                style={{ padding: '0 12px' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M4.5 11.5A3.5 3.5 0 1 1 8 8h10.94a1.5 1.5 0 0 0-2.83-1H8a3.5 3.5 0 1 1-3.5 3.5v-7A1.5 1.5 0 1 1 6 6v5a.5.5 0 0 1-1 0V6a2.5 2.5 0 0 0-5 0v5a2.5 2.5 0 0 0 2.5 2.5h2a.5.5 0 0 0 0-1h-2a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 1 1 5 6v5a.5.5 0 0 1-.5.5z"/>
+                </svg>
+              </button>
+
               <button onClick={() => sendMessage(inputText)} className="btn btn-primary" disabled={loading || !inputText.trim()}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15z"/>

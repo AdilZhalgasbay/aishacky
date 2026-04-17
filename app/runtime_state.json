@@ -16,13 +16,13 @@
       "id": "attendance-4f64c6b3b8",
       "class_name": "1A",
       "date": "2026-04-18",
-      "present_count": 25,
+      "present_count": 23,
       "absent_count": 2,
-      "raw_message": "Yeraly: 1A - 25 детей, 2 болеют",
+      "raw_message": "Дамир Жумабеков: 1A - 25 детей, 2 болеют с температурой",
       "notes": null,
       "sent_to_canteen": false,
       "created_at": "2026-04-18T00:52:34.702327",
-      "updated_at": "2026-04-18T01:23:03.600960"
+      "updated_at": "2026-04-18T03:14:43.391686"
     }
   ],
   "incidents": [
@@ -41,7 +41,93 @@
     }
   ],
   "tasks": [],
-  "substitutions": [],
+  "substitutions": [
+    {
+      "id": "sub-177b3adc22",
+      "original_teacher_name": "Жомартова А.Қ.",
+      "substitute_name": "Бақтыгулов А.И.",
+      "class_name": "10В",
+      "date": "2026-04-17",
+      "period": 3,
+      "subject": "Қазақ тілі",
+      "reason": "Болезнь",
+      "status": "confirmed",
+      "notified": true,
+      "created_at": "2026-04-18T03:09:54.835273",
+      "compliance": {
+        "compliant": true,
+        "reason": "Не удалось выполнить проверку."
+      }
+    },
+    {
+      "id": "sub-c9c327e547",
+      "original_teacher_name": "Жомартова А.Қ.",
+      "substitute_name": "Курмангалиев Е.К",
+      "class_name": "10В",
+      "date": "2026-04-17",
+      "period": 5,
+      "subject": "Тәрбие сағаты",
+      "reason": "Болезнь",
+      "status": "confirmed",
+      "notified": true,
+      "created_at": "2026-04-18T03:09:54.836324",
+      "compliance": {
+        "compliant": true,
+        "reason": "Не удалось выполнить проверку."
+      }
+    },
+    {
+      "id": "sub-4198d378c8",
+      "original_teacher_name": "Жомартова А.Қ.",
+      "substitute_name": "Мұрат Ә.",
+      "class_name": "10В",
+      "date": "2026-04-17",
+      "period": 3,
+      "subject": "Қазақ әдебиеті",
+      "reason": "Болезнь",
+      "status": "confirmed",
+      "notified": true,
+      "created_at": "2026-04-18T03:09:54.836324",
+      "compliance": {
+        "compliant": true,
+        "reason": "Не удалось выполнить проверку."
+      }
+    },
+    {
+      "id": "sub-87a29061ae",
+      "original_teacher_name": "Жомартова А.Қ.",
+      "substitute_name": "Бақтыгулов А.И.",
+      "class_name": "10В",
+      "date": "2026-04-17",
+      "period": 4,
+      "subject": "Қазақ тілі",
+      "reason": "Болезнь",
+      "status": "confirmed",
+      "notified": true,
+      "created_at": "2026-04-18T03:09:54.836324",
+      "compliance": {
+        "compliant": true,
+        "reason": "Не удалось выполнить проверку."
+      }
+    },
+    {
+      "id": "sub-a3c17103e3",
+      "original_teacher_name": "Жомартова А.Қ.",
+      "substitute_name": "Курмангалиев Е.К",
+      "class_name": "10В",
+      "date": "2026-04-17",
+      "period": 1,
+      "subject": "Қазақ әдебиеті",
+      "reason": "Болезнь",
+      "status": "confirmed",
+      "notified": true,
+      "created_at": "2026-04-18T03:09:54.836324",
+      "compliance": {
+        "compliant": true,
+        "reason": "Не удалось выполнить проверку."
+      }
+    }
+  ],
   "telegram_messages": [
     {
       "id": "tg-bd6d1af3d6",
@@ -626,6 +712,25 @@
         ]
       },
       "created_at": "2026-04-18T01:39:37.339551"
+    },
+    {
+      "id": "tg-1706685631",
+      "sender_name": "Дамир Жумабеков",
+      "message_text": "1A - 25 детей, 2 болеют с температурой",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 23,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 23,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T03:14:43.415048"
     }
   ]
 }
