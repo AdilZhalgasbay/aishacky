@@ -32,12 +32,12 @@
       "location": "кабинет 201",
       "priority": "high",
       "assigned_to_name": "Завхоз",
-      "status": "open",
+      "status": "resolved",
       "description": "протекает потолок после дождя",
       "raw_message": "В кабинете 201 протекает потолок после дождя",
       "created_at": "2026-04-18T00:22:56.531299",
-      "resolved_at": null,
-      "updated_at": "2026-04-18T00:22:56.531299"
+      "resolved_at": "2026-04-18T02:38:02.395700",
+      "updated_at": "2026-04-18T02:38:02.395700"
     }
   ],
   "tasks": [],

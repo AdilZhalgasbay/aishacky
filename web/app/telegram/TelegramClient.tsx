@@ -253,7 +253,7 @@ export default function TelegramClient() {
                   {msg.type === 'bot' && msg.parsed_type && msg.parsed_type !== 'general' && (
                     <div style={{ marginTop: 4, display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary)', background: '#dbeafe', padding: '2px 8px', borderRadius: 12 }}>
-                        Тип: {PARSED_TYPE_LABEL[msg.parsed_type] || msg.parsed_type}
+                        Тип: {PARSED_TYPE_LABEL[msg.parsed_type as string] || msg.parsed_type}
                       </span>
                       {msg.parsed_data?.class && (
                         <span style={{ fontSize: 10, fontWeight: 700, color: '#15803D', background: '#dcfce7', padding: '2px 8px', borderRadius: 12 }}>
@@ -316,7 +316,7 @@ export default function TelegramClient() {
                   <td style={{ fontSize: 13, maxWidth: 280 }}>{msg.message_text}</td>
                   <td>
                     <span className={`badge badge-${msg.parsed_type === 'attendance' ? 'completed' : msg.parsed_type === 'incident' ? 'high' : 'pending'}`}>
-                      {PARSED_TYPE_LABEL[msg.parsed_type] || msg.parsed_type || '—'}
+                      {PARSED_TYPE_LABEL[msg.parsed_type as string] || msg.parsed_type || '—'}
                     </span>
                   </td>
                   <td style={{ fontSize: 11, color: 'var(--text-muted)', maxWidth: 180 }}>

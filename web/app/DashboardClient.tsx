@@ -1,3 +1,5 @@
+"use client"
+
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import PretextLog from '../components/PretextLog'
@@ -14,6 +16,7 @@ export interface DashboardTask {
   id: string
   title: string
   priority: string
+  status: string
   source: string
   assigned_to_name: string | null
 }

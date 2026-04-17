@@ -45,7 +45,7 @@ def build_index():
         print(f"  {txt_file.name}: {len(chunks)} чанков")
 
     if not all_chunks:
-        print("⚠️  Нет файлов в data/regulations/. RAG отключён.")
+        print("[WARN]  Нет файлов в data/regulations/. RAG отключён.")
         return
 
     print(f"Индексируем {len(all_chunks)} чанков...")
@@ -68,7 +68,7 @@ def build_index():
     INDEX_PATH.write_text(
         json.dumps({"chunks": _chunks}, ensure_ascii=False), encoding="utf-8"
     )
-    print(f"✅ RAG индекс готов: {len(_chunks)} чанков")
+    print(f"[OK] RAG индекс готов: {len(_chunks)} чанков")
 
 
 def search(query: str, top_k: int = 5) -> list[dict]:

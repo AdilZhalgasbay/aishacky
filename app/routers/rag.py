@@ -16,7 +16,7 @@ class RagRequest(BaseModel):
     top_k: int = 3
 
 @router.post("/query")
-async def rag_query(req: RagRequest):
+def rag_query(req: RagRequest):
     results = rag_store.search(req.query, top_k=req.top_k)
 
     if not results:

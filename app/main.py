@@ -25,12 +25,12 @@ from app import rag_store
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Строим RAG-индекс при старте, если есть файлы приказов."""
-    print("🚀 Запуск Aqbobek AI API...")
+    print("[START] Запуск Aqbobek AI API...")
     scheduler_started = False
     try:
         rag_store.build_index()
     except Exception as e:
-        print(f"⚠️  RAG индекс не загружен: {e}")
+        print(f"[WARN]  RAG индекс не загружен: {e}")
 
     if os.getenv("WA_SCHEDULER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}:
         try:
@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
             start_scheduler()
             scheduler_started = True
         except Exception as e:
-            print(f"⚠️  WhatsApp планировщик не запущен: {e}")
+            print(f"[WARN]  WhatsApp планировщик не запущен: {e}")
 
     yield
     if scheduler_started:
@@ -48,8 +48,8 @@ async def lifespan(app: FastAPI):
 
             stop_scheduler()
         except Exception as e:
-            print(f"⚠️  Ошибка остановки WhatsApp планировщика: {e}")
-    print("🛑 Остановка сервера.")
+            print(f"[WARN]  Ошибка остановки WhatsApp планировщика: {e}")
+    print("[STOP] Остановка сервера.")
 
 
 app = FastAPI(
