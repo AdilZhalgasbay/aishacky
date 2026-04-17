@@ -10,7 +10,7 @@
       "notes": null,
       "sent_to_canteen": false,
       "created_at": "2026-04-18T00:21:55.364433",
-      "updated_at": "2026-04-18T03:02:40.156846"
+      "updated_at": "2026-04-18T03:15:18.731986"
     },
     {
       "id": "attendance-4f64c6b3b8",
@@ -1424,6 +1424,25 @@
         ]
       },
       "created_at": "2026-04-18T03:02:40.221990"
+    },
+    {
+      "id": "tg-68da13c8c4",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T03:15:18.740465"
     }
   ]
 }
