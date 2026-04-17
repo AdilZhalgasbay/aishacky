@@ -10,7 +10,7 @@
       "notes": null,
       "sent_to_canteen": false,
       "created_at": "2026-04-18T00:21:55.364433",
-      "updated_at": "2026-04-18T01:39:37.320990"
+      "updated_at": "2026-04-18T03:02:40.156846"
     },
     {
       "id": "attendance-4f64c6b3b8",
@@ -22,7 +22,7 @@
       "notes": null,
       "sent_to_canteen": false,
       "created_at": "2026-04-18T00:52:34.702327",
-      "updated_at": "2026-04-18T01:23:03.600960"
+      "updated_at": "2026-04-18T03:00:35.773152"
     }
   ],
   "incidents": [
@@ -626,6 +626,804 @@
         ]
       },
       "created_at": "2026-04-18T01:39:37.339551"
+    },
+    {
+      "id": "tg-dd462a1e9d",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:40:51.637373"
+    },
+    {
+      "id": "tg-74441c9a42",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:42:03.886654"
+    },
+    {
+      "id": "tg-6b283720e1",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:42:51.022983"
+    },
+    {
+      "id": "tg-5f627e3e79",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:45:22.802132"
+    },
+    {
+      "id": "tg-d83b656bc0",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:46:49.212077"
+    },
+    {
+      "id": "tg-4fd11000a7",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:48:47.079292"
+    },
+    {
+      "id": "tg-b335cc9e69",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:53:12.493035"
+    },
+    {
+      "id": "tg-4a67435293",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:57:06.621005"
+    },
+    {
+      "id": "tg-1dafe90d72",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T01:57:51.779965"
+    },
+    {
+      "id": "tg-329b51c1bf",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:00:23.273237"
+    },
+    {
+      "id": "tg-5acfc96a8d",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:01:32.743163"
+    },
+    {
+      "id": "tg-f233f844c1",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:04:55.681808"
+    },
+    {
+      "id": "tg-6a87dda8f7",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:06:02.860564"
+    },
+    {
+      "id": "tg-22d67912dd",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:09:43.822060"
+    },
+    {
+      "id": "tg-d5030790f5",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:13:40.408786"
+    },
+    {
+      "id": "tg-9fc87c8785",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:15:46.759972"
+    },
+    {
+      "id": "tg-afe15791f6",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:16:17.476724"
+    },
+    {
+      "id": "tg-b9297e691c",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:18:14.240495"
+    },
+    {
+      "id": "tg-60510da69a",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:19:06.785933"
+    },
+    {
+      "id": "tg-abdc70344e",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:19:53.673826"
+    },
+    {
+      "id": "tg-a258d1e224",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:20:27.384649"
+    },
+    {
+      "id": "tg-62f308a5c2",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:22:21.176338"
+    },
+    {
+      "id": "tg-c2b2afe998",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:23:12.699860"
+    },
+    {
+      "id": "tg-e0854ddf79",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:24:27.204670"
+    },
+    {
+      "id": "tg-5343c640fb",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:25:20.985376"
+    },
+    {
+      "id": "tg-e98bafa492",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:26:59.929442"
+    },
+    {
+      "id": "tg-9ef512dedc",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:27:49.417236"
+    },
+    {
+      "id": "tg-4a85c66ed3",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:28:58.403084"
+    },
+    {
+      "id": "tg-a9b0affb0e",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:31:25.757802"
+    },
+    {
+      "id": "tg-545163a435",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:35:17.901509"
+    },
+    {
+      "id": "tg-2174a17cd9",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:40:55.413065"
+    },
+    {
+      "id": "tg-27a9edf97d",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:45:25.747516"
+    },
+    {
+      "id": "tg-0eb72c80b7",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:47:24.806329"
+    },
+    {
+      "id": "tg-724b25edd8",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:48:12.407104"
+    },
+    {
+      "id": "tg-0a4ff567dd",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:50:21.558751"
+    },
+    {
+      "id": "tg-d9c6dd2c82",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:51:19.254783"
+    },
+    {
+      "id": "tg-0e9a2e136e",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:53:55.382538"
+    },
+    {
+      "id": "tg-8b8c913cd5",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:55:13.532640"
+    },
+    {
+      "id": "tg-ef948d7bf7",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:57:16.497441"
+    },
+    {
+      "id": "tg-9f453a9e0e",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T02:57:55.686067"
+    },
+    {
+      "id": "tg-b5e8658898",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1A",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T03:00:35.799729"
+    },
+    {
+      "id": "tg-9915591281",
+      "sender_name": "Yeraly",
+      "message_text": "1A - 25 детей, 2 болеют",
+      "parsed_type": "attendance",
+      "parsed_data": {
+        "date": "2026-04-18",
+        "total_portions": 25,
+        "total_absent": 2,
+        "classes": [
+          {
+            "class": "1А",
+            "present": 25,
+            "absent": 2
+          }
+        ]
+      },
+      "created_at": "2026-04-18T03:02:40.221990"
     }
   ]
 }

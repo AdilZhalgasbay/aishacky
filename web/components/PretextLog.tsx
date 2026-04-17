@@ -8,31 +8,30 @@ interface LogEntry {
   timestamp: string
 }
 
-export default function PretextLog({ entries }: { entries: LogEntry[] }) {
+export default function PretextLog({ entries = [] }: { entries?: LogEntry[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [layoutInfo, setLayoutInfo] = useState<{ height: number; ready: boolean }>({ height: 0, ready: false })
 
   useEffect(() => {
     if (!containerRef.current || entries.length === 0) return
 
-    const width = containerRef.current.clientWidth - 32 // padding
-    const font = '13px "JetBrains Mono", monospace' // matches our mono font
+    const width = containerRef.current.clientWidth - 32
+    const font = '13px "JetBrains Mono", monospace'
     const lineHeight = 20
 
-    // Combined text for measurement
     const allText = entries.map(e => `[${e.timestamp}] ${e.text}`).join('\n')
-    
-    // Phase 1: Prepare (Measurement)
-    const prepared = prepare(allText, font)
-    
-    // Phase 2: Layout (Arithmetic)
-    const { height } = layout(prepared, width, lineHeight)
-    
-    setLayoutInfo({ height, ready: true })
+
+    try {
+      const prepared = prepare(allText, font)
+      const { height } = layout(prepared, width, lineHeight)
+      setLayoutInfo({ height, ready: true })
+    } catch {
+      setLayoutInfo({ height: entries.length * lineHeight + 16, ready: true })
+    }
   }, [entries])
 
   return (
-    <div 
+    <div
       className="card card-sm bg-slate-900 border-slate-800 overflow-hidden"
       style={{ minHeight: '120px', position: 'relative' }}
     >
@@ -42,11 +41,11 @@ export default function PretextLog({ entries }: { entries: LogEntry[] }) {
           Hyperscale Agent Logs (Pretext Engine Active)
         </span>
       </div>
-      
-      <div 
+
+      <div
         ref={containerRef}
         className="text-[13px] font-mono text-emerald-400 leading-5"
-        style={{ 
+        style={{
           height: layoutInfo.ready ? `${layoutInfo.height}px` : 'auto',
           transition: 'height 0.1s ease-out'
         }}
@@ -60,7 +59,7 @@ export default function PretextLog({ entries }: { entries: LogEntry[] }) {
           <div className="text-slate-600 italic">Waiting for agent activity...</div>
         )}
       </div>
-      
+
       {!layoutInfo.ready && entries.length > 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
           <div className="spinner !border-slate-700 !border-t-emerald-500" />
