@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.routers.attendance import AttendanceRequest, parse_attendance
-from app.routers.incidents import IncidentRequest, parse_incident
+from app.routers.incidents import IncidentRequest, parse_incident, parse_resolution
 
 
 def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | None]:
@@ -23,20 +23,15 @@ def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | No
         "человек",
     ]
     incident_kw = [
-        "сломал",
-        "сломана",
-        "сломано",
-        "течёт",
-        "не работает",
-        "нет мела",
-        "нет воды",
-        "не включается",
-        "разбит",
-        "поломан",
-        "протекает",
-        "замок",
-        "проектор",
-        "потолок",
+        "сломал", "сломана", "сломано", "течёт", "не работает", "нет мела",
+        "нет воды", "не включается", "разбит", "поломан", "протекает", "замок",
+        "проектор", "потолок",
+        "плохо", "температура", "вырвало", "кровь", "травма", "упал",
+        "драка", "посторонний", "шприц"
+    ]
+
+    resolution_kw = [
+        "починил", "готово", "исправил", "заменил", "выполнил", "решил", "сделано", "починили", "устранил", "починила"
     ]
 
     if any(kw in text_l for kw in attendance_kw) and any(char.isdigit() for char in text):
@@ -46,6 +41,10 @@ def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | No
     if any(kw in text_l for kw in incident_kw):
         req = IncidentRequest(message=text, sender=sender)
         return "incident", parse_incident(req)
+
+    if any(kw in text_l for kw in resolution_kw):
+        req = IncidentRequest(message=text, sender=sender)
+        return "resolution", parse_resolution(req)
 
     return "general", None
 
@@ -71,6 +70,15 @@ def extract_log_payload(parsed_type: str, result: dict[str, Any] | None) -> dict
             "assignee": result.get("assignee"),
             "description": result.get("description"),
         }
+
+    if parsed_type == "resolution":
+        if result.get("incident"):
+            inc = result["incident"]
+            return {
+                "type": "resolution",
+                "description": f"Решён инцидент: {inc.get('description')}",
+                "assignee": inc.get('assigned_to_name')
+            }
 
     return None
 
@@ -98,6 +106,13 @@ def format_result(result: dict[str, Any], sender: str) -> str:
             f"🔧 {result.get('description', '—')}\n"
             f"👤 Назначено: {result.get('assignee', '—')}\n"
             f"⚡ Приоритет: {result.get('priority', 'medium')}"
+        )
+
+    if result.get("is_resolution") and result.get("incident"):
+        inc = result["incident"]
+        return (
+            f"✅ *Задача выполнена! ({sender})*\n"
+            f"🔧 Инцидент: {inc.get('description', '—')}"
         )
 
     return ""

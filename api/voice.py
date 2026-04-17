@@ -23,17 +23,26 @@ NIM_BASE_URL = os.getenv("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
 INVOKE_URL = f"{NIM_BASE_URL}/chat/completions"
 MODEL = "google/gemma-3n-e4b-it"
 
-SYSTEM_PROMPT = """Ты — AI-помощник директора школы. 
+def get_system_prompt() -> str:
+    from app.state_store import list_employees
+    try:
+        employees = list_employees()
+        valid_names = "\n".join([f"- {e['name']} ({e['role']})" for e in employees])
+        names_section = f"\n\nТЕБЕ РАЗРЕШЕНО НАЗНАЧАТЬ ЗАДАЧИ ТОЛЬКО ЛЮДЯМ ИЗ ЭТОГО СПИСКА (выведи имя точно как в списке. Если голос исказил имя, найди наиболее похожее):\n{valid_names}\n"
+    except Exception:
+        names_section = ""
+
+    return f"""Ты — AI-помощник директора школы. 
 Твоя задача: из голосового или текстового сообщения директора извлечь список задач.
 Каждая задача — отдельный объект. Верни ТОЛЬКО JSON-массив задач.
-
+{names_section}
 Формат каждой задачи:
-{
-  "assignee": "ФИО или должность исполнителя",
+{{
+  "assignee": "Точное ФИО из списка выше (если не найдено - null)",
   "description": "Чёткое описание задачи",
   "deadline": "Дедлайн (если упомянут, иначе null)",
   "priority": "high | medium | low"
-}"""
+}}"""
 
 
 def parse_tasks_from_text(text: str) -> list[dict]:
@@ -49,7 +58,7 @@ def parse_tasks_from_text(text: str) -> list[dict]:
     payload = {
         "model": MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": get_system_prompt()},
             {"role": "user", "content": f"Команда директора: {text}\n\nВерни JSON-массив задач."},
         ],
         "max_tokens": 1024,
@@ -88,7 +97,7 @@ def parse_tasks_from_audio(audio_bytes: bytes, mime_type: str = "audio/wav") -> 
     payload = {
         "model": MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": get_system_prompt()},
             {
                 "role": "user",
                 "content": [

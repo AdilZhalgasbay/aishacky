@@ -12,9 +12,12 @@ SYSTEM = """Ты — AI-ассистент директора школы.
 
 ASSIGNEE_MAP = {
     "парта": "Завхоз", "стул": "Завхоз", "окно": "Завхоз", "кран": "Завхоз",
-    "мел": "Завхоз", "доска": "Завхоз", "свет": "Электрик",
-    "компьютер": "IT-специалист", "проектор": "IT-специалист",
+    "мел": "Завхоз", "доска": "Завхоз", "свет": "Электрик", "лампочка": "Электрик",
+    "компьютер": "IT-специалист", "проектор": "IT-специалист", "интернет": "IT-специалист",
     "туалет": "Завхоз", "отопление": "Завхоз",
+    "плохо": "Медсестра", "температура": "Медсестра", "вырвало": "Медсестра", 
+    "кровь": "Медсестра", "травма": "Медсестра", "упал": "Медсестра",
+    "драка": "Охрана", "посторонний": "Охрана",
 }
 
 class IncidentRequest(BaseModel):
@@ -63,3 +66,35 @@ def parse_incident(req: IncidentRequest):
         )
         result["incident_id"] = incident["id"]
     return result
+
+@router.post("/parse-resolution")
+def parse_resolution(req: IncidentRequest):
+    open_incidents = state_store.list_incidents(status="open")
+    if not open_incidents:
+        return {"is_resolution": False, "message": "Нет открытых инцидентов"}
+
+    incident_lines = "\n".join([f"- ID: {inc['id']}, Desc: {inc['description']}, Assignee: {inc.get('assigned_to_name', 'None')}" for inc in open_incidents[:15]])
+
+    prompt = f"""Сообщение от работника: "{req.message}"
+Автор: {req.sender if req.sender else 'Неизвестно'}
+
+Вот список открытых инцидентов:
+{incident_lines}
+
+Какая из этих задач была выполнена работником? Обрати внимание на смысл (что починили) и на автора (он мог быть исполнителем задачи).
+Если подходящая задача найдена, верни "is_resolution": true и "incident_id". 
+Если инцидент не найден, верни "is_resolution": false.
+
+Верни СТРОГО JSON:
+{{
+  "is_resolution": true,
+  "incident_id": "incident-12345"
+}}"""
+
+    result = chat_json(SYSTEM, prompt)
+    resolved_id = result.get("incident_id")
+    if result.get("is_resolution") and resolved_id:
+        updated = state_store.update_incident(resolved_id, {"status": "resolved"})
+        if updated:
+            return {"type": "resolution", "incident": updated, "is_resolution": True}
+    return {"is_resolution": False}

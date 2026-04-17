@@ -9,6 +9,8 @@ app/state_store.py
 from __future__ import annotations
 
 import json
+import threading
+from functools import wraps
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -85,6 +87,17 @@ def _default_state() -> dict[str, list[dict[str, Any]]]:
         "substitutions": [],
         "telegram_messages": [],
     }
+
+
+_STATE_LOCK = threading.Lock()
+
+
+def locked_state(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with _STATE_LOCK:
+            return func(*args, **kwargs)
+    return wrapper
 
 
 def _read_state() -> dict[str, list[dict[str, Any]]]:
@@ -188,6 +201,7 @@ def list_regulation_docs() -> list[dict[str, Any]]:
     return docs
 
 
+@locked_state
 def upsert_attendance_logs(
     *,
     target_date: str,
@@ -241,6 +255,7 @@ def list_attendance_logs(target_date: str | None = None) -> list[dict[str, Any]]
     return sorted(rows, key=lambda item: (item["date"], item["class_name"]))
 
 
+@locked_state
 def create_or_update_attendance_log(payload: dict[str, Any]) -> dict[str, Any]:
     target_date = payload.get("date") or date.today().isoformat()
     class_name = payload.get("class_name") or payload.get("class_id") or payload.get("id")
@@ -282,6 +297,7 @@ def create_or_update_attendance_log(payload: dict[str, Any]) -> dict[str, Any]:
     return record
 
 
+@locked_state
 def mark_attendance_sent(target_date: str) -> int:
     state = _read_state()
     updated = 0
@@ -294,6 +310,7 @@ def mark_attendance_sent(target_date: str) -> int:
     return updated
 
 
+@locked_state
 def create_incident(payload: dict[str, Any]) -> dict[str, Any]:
     state = _read_state()
     now = _now_iso()
@@ -323,6 +340,7 @@ def list_incidents(status: str | None = None) -> list[dict[str, Any]]:
     return sorted(incidents, key=lambda item: item["created_at"], reverse=True)
 
 
+@locked_state
 def update_incident(incident_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
     state = _read_state()
     for incident in state["incidents"]:
@@ -337,6 +355,7 @@ def update_incident(incident_id: str, updates: dict[str, Any]) -> dict[str, Any]
     return None
 
 
+@locked_state
 def create_task(payload: dict[str, Any]) -> dict[str, Any]:
     state = _read_state()
     title = payload.get("title") or (payload.get("description") or "Новая задача")[:80]
@@ -366,6 +385,7 @@ def list_tasks(status: str | None = None) -> list[dict[str, Any]]:
     return sorted(tasks, key=lambda item: item["created_at"], reverse=True)
 
 
+@locked_state
 def update_task(task_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
     state = _read_state()
     for task in state["tasks"]:
@@ -378,6 +398,7 @@ def update_task(task_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
+@locked_state
 def replace_substitutions_for_teacher(
     *,
     absent_teacher_name: str,
@@ -404,6 +425,7 @@ def list_substitutions(date_from: str | None = None) -> list[dict[str, Any]]:
     return sorted(substitutions, key=lambda item: (item["date"], item.get("period") or 0))
 
 
+@locked_state
 def append_telegram_message(
     *,
     sender_name: str,

@@ -224,41 +224,32 @@ async def collect_wa_incidents():
         seen_fingerprints = _load_incident_fingerprints()
         updated = False
 
-        async with httpx.AsyncClient(timeout=60) as client:
-            for message in messages[-10:]:
-                fingerprint = _message_fingerprint(message)
-                if fingerprint in seen_fingerprints:
-                    continue
+        from app.message_router import auto_route_message, format_result
 
-                response = await client.post(
-                    f"{get_api_base()}/messages/parse-incident",
-                    json={"message": message["text"], "sender": message["sender"]},
-                )
-                response.raise_for_status()
-                result = response.json()
+        for message in messages[-10:]:
+            fingerprint = _message_fingerprint(message)
+            if fingerprint in seen_fingerprints:
+                continue
 
-                if not result.get("is_incident"):
-                    continue
+            parsed_type, result = auto_route_message(message["text"], message["sender"])
+            
+            if not result or parsed_type not in ["incident", "resolution"]:
+                continue
 
-                seen_fingerprints[fingerprint] = datetime.now().isoformat()
-                updated = True
+            seen_fingerprints[fingerprint] = datetime.now().isoformat()
+            updated = True
 
-                print(
-                    f"  🚨 Инцидент: {result.get('description', '—')} "
-                    f"→ {result.get('assignee', '—')}"
-                )
+            if parsed_type == "incident":
+                print(f"  🚨 Инцидент: {result.get('description', '—')} → {result.get('assignee', '—')}")
+            else:
+                print(f"  ✅ Решено: {result.get('incident', {}).get('description', '—')} ({message['sender']})")
 
-                director_chat_id = get_director_chat_id()
-                if director_chat_id:
-                    from api.telegram import send_message
-
-                    send_message(
-                        int(director_chat_id),
-                        f"🚨 *Инцидент от {message['sender']}*\n"
-                        f"📍 {result.get('location', '—')}\n"
-                        f"🔧 {result.get('description', '—')}\n"
-                        f"👤 → {result.get('assignee', '—')}",
-                    )
+            director_chat_id = get_director_chat_id()
+            if director_chat_id:
+                from api.telegram import send_message
+                summary = format_result(result, message["sender"])
+                if summary:
+                    send_message(int(director_chat_id), summary)
 
         if updated:
             _save_incident_fingerprints(seen_fingerprints)
