@@ -55,7 +55,7 @@ def rag_query(req: RagRequest):
     }
 
 
-async def check_compliance(action_description: str):
+def check_compliance(action_description: str):
     """
     Проверяет действие (замена, задача) на соответствие приказам через RAG.
     """

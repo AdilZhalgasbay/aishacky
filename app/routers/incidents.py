@@ -22,7 +22,7 @@ class IncidentRequest(BaseModel):
     sender: str | None = None
 
 @router.post("/parse-incident")
-async def parse_incident(req: IncidentRequest):
+def parse_incident(req: IncidentRequest):
     prompt = f"""Сообщение: "{req.message}"
 Автор: {req.sender if req.sender else "Неизвестно"}
 

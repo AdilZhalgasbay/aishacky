@@ -8,7 +8,7 @@ from app.routers.attendance import AttendanceRequest, parse_attendance
 from app.routers.incidents import IncidentRequest, parse_incident
 
 
-async def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | None]:
+def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | None]:
     """
     Определяет тип сообщения и вызывает нужный parser.
     Возвращает `(parsed_type, result)`.
@@ -41,11 +41,11 @@ async def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any
 
     if any(kw in text_l for kw in attendance_kw) and any(char.isdigit() for char in text):
         req = AttendanceRequest(messages=[f"{sender}: {text}"])
-        return "attendance", await parse_attendance(req)
+        return "attendance", parse_attendance(req)
 
     if any(kw in text_l for kw in incident_kw):
         req = IncidentRequest(message=text, sender=sender)
-        return "incident", await parse_incident(req)
+        return "incident", parse_incident(req)
 
     return "general", None
 

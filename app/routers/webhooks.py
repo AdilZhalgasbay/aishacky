@@ -29,10 +29,10 @@ async def telegram_webhook(request: Request, background_tasks: BackgroundTasks):
     return {"ok": True}
 
 
-async def _process_tg_message(msg: dict):
-    """Обрабатывает сообщение в фоне — не блокирует webhook."""
+def _process_tg_message(msg: dict):
+    """Обрабатывает сообщение в фоне в отдельном потоке."""
     try:
-        parsed_type, result = await auto_route_message(msg["text"], msg["sender"])
+        parsed_type, result = auto_route_message(msg["text"], msg["sender"])
         state_store.append_telegram_message(
             sender_name=msg["sender"],
             message_text=msg["text"],
@@ -76,8 +76,9 @@ async def wa_webhook(request: Request):
     payload = await request.json()
     messages = wa_extract(payload)
 
+    from fastapi.concurrency import run_in_threadpool
     for msg in messages:
-        _, result = await auto_route_message(msg["text"], msg["sender"])
+        _, result = await run_in_threadpool(auto_route_message, msg["text"], msg["sender"])
         if result and msg.get("wa_id"):
             director_wa = os.getenv("DIRECTOR_WA_ID", "")
             if director_wa:

@@ -16,7 +16,7 @@ class AttendanceRequest(BaseModel):
     date: str | None = None
 
 @router.post("/parse-attendance")
-async def parse_attendance(req: AttendanceRequest):
+def parse_attendance(req: AttendanceRequest):
     today = req.date or date.today().isoformat()
     text = "\n".join(req.messages)
 

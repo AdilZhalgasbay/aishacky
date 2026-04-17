@@ -11,13 +11,13 @@ class VoiceTextRequest(BaseModel):
     text: str
 
 @router.post("/parse-tasks")
-async def parse_tasks_text(req: VoiceTextRequest):
+def parse_tasks_text(req: VoiceTextRequest):
     """Парсинг текстовой команды директора в задачи."""
     tasks = parse_tasks_from_text(req.text)
     created = []
     for task in tasks:
         # RAG Compliance Check
-        compliance = await rag.check_compliance(f"Задача: {task.get('description')} для {task.get('assignee')}")
+        compliance = rag.check_compliance(f"Задача: {task.get('description')} для {task.get('assignee')}")
         created.append(
             state_store.create_task(
                 {
@@ -34,15 +34,15 @@ async def parse_tasks_text(req: VoiceTextRequest):
     return {"tasks": created, "count": len(created)}
 
 @router.post("/parse-tasks-audio")
-async def parse_tasks_audio(file: UploadFile = File(...)):
+def parse_tasks_audio(file: UploadFile = File(...)):
     """Парсинг голосового файла директора в задачи."""
-    audio_bytes = await file.read()
+    audio_bytes = file.file.read()
     mime = file.content_type or "audio/wav"
     tasks = parse_tasks_from_audio(audio_bytes, mime_type=mime)
     created = []
     for task in tasks:
         # RAG Compliance Check
-        compliance = await rag.check_compliance(f"Задача: {task.get('description')} для {task.get('assignee')}")
+        compliance = rag.check_compliance(f"Задача: {task.get('description')} для {task.get('assignee')}")
         created.append(
             state_store.create_task(
                 {

@@ -100,7 +100,7 @@ async def create_attendance(payload: AttendanceUpdateRequest):
 
 
 @router.patch("/attendance")
-async def mark_attendance_sent(target_date: str | None = Query(default=None, alias="date")):
+def mark_attendance_sent(target_date: str | None = Query(default=None, alias="date")):
     effective_date = target_date or date.today().isoformat()
     updated = state_store.mark_attendance_sent(effective_date)
 
@@ -192,8 +192,8 @@ async def get_telegram_messages(limit: int = 50):
 
 
 @router.post("/telegram/simulate")
-async def simulate_telegram_message(payload: TelegramSimulateRequest):
-    parsed_type, result = await auto_route_message(payload.message, payload.sender_name)
+def simulate_telegram_message(payload: TelegramSimulateRequest):
+    parsed_type, result = auto_route_message(payload.message, payload.sender_name)
     parsed_data = extract_log_payload(parsed_type, result)
     state_store.append_telegram_message(
         sender_name=payload.sender_name,

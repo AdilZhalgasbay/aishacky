@@ -48,7 +48,7 @@ def _find_absent_teacher_name(db: dict, req: SubstituteRequest) -> str | None:
 
 
 @router.post("/substitute")
-async def find_substitute(req: SubstituteRequest):
+def find_substitute(req: SubstituteRequest):
     db = _load_db()
     absent_teacher = _find_absent_teacher_name(db, req)
     if not absent_teacher:
@@ -118,7 +118,7 @@ async def find_substitute(req: SubstituteRequest):
         )
 
     # RAG Compliance Check
-    compliance = await rag.check_compliance(
+    compliance = rag.check_compliance(
         f"Замена учителя {absent_teacher} на {candidate_teachers[0]['name']} (Предмет: {substitutions[0]['subject']})"
     )
     for sub in substitutions:
