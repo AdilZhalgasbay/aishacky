@@ -17,8 +17,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Явный таймаут: 5 сек на соединение, 15 сек на чтение ответа
-_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=2.0)
+# Явный таймаут: 5 сек на соединение, 45 сек на чтение ответа
+_TIMEOUT = httpx.Timeout(connect=5.0, read=45.0, write=5.0, pool=2.0)
 
 client = OpenAI(
     base_url=os.getenv("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1"),
@@ -26,7 +26,7 @@ client = OpenAI(
     http_client=httpx.Client(timeout=_TIMEOUT),
 )
 
-MODEL = "nvidia/llama-3.1-nemotron-nano-8b-v1"
+MODEL = "deepseek-ai/deepseek-v3.2"
 
 
 def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: str = None) -> str:

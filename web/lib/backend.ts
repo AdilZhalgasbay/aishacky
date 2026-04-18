@@ -77,8 +77,8 @@ export async function safeBackendJson<T>(
 export async function proxyBackend(request: Request, targetPath: string): Promise<Response> {
   const url = new URL(request.url)
   const controller = new AbortController()
-  // 20-секундный таймаут на сервере (меньше чем 25 сек у клиента)
-  const timer = setTimeout(() => controller.abort(), 20000)
+  // 55-секундный таймаут на сервере (меньше чем 60 сек у клиента)
+  const timer = setTimeout(() => controller.abort(), 55000)
 
   const init: RequestInit = {
     method: request.method,
