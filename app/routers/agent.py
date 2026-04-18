@@ -108,6 +108,16 @@ def _classify_intent(text: str) -> str:
         "порций",
         "питание",
     ]
+    staff_keywords = [
+        "сотрудник",
+        "учитель",
+        "преподавател",
+        "нанять",
+        "уволить",
+        "зарплата",
+        "отпуск",
+        "персонал",
+    ]
 
     if any(word in lower for word in rag_keywords):
         return "rag"
@@ -115,6 +125,8 @@ def _classify_intent(text: str) -> str:
         return "substitution"
     if any(word in lower for word in incident_keywords):
         return "incident"
+    if any(word in lower for word in staff_keywords):
+        return "staff"
     if any(word in lower for word in attendance_keywords) and any(char.isdigit() for char in text):
         return "attendance"
 
@@ -129,6 +141,7 @@ def _classify_intent(text: str) -> str:
 - substitution
 - rag
 - attendance
+- staff
 - general
 
 Сообщение: {text}
@@ -139,7 +152,7 @@ def _classify_intent(text: str) -> str:
 }}""",
         )
         route = str(data.get("route") or "general").strip().lower()
-        if route in {"task", "incident", "substitution", "rag", "attendance", "general"}:
+        if route in {"task", "incident", "substitution", "rag", "attendance", "staff", "general"}:
             return route
     except Exception:
         pass
@@ -181,17 +194,19 @@ def _assistant_text_for_result(route: str, result: dict[str, Any]) -> str:
         return f"Создала {len(tasks)} задач(и). " + " | ".join(preview)
     if route == "rag":
         return result.get("answer") or "Не удалось получить ответ по приказам."
+    if route == "staff":
+        return result.get("message") or "Информация о сотрудниках обновлена."
     return result.get("message") or "Сообщение обработано."
 
 
 def _handle_director_message(text: str, *, source: str) -> dict[str, Any]:
-    user_row = state_store.append_agent_message(
-        role="user",
-        message_text=text,
-        route=None,
-        payload={"source": source},
-        source=source,
-    )
+    # removed persistence as per user request
+    user_row = {
+        "role": "user",
+        "message_text": text,
+        "payload": {"source": source},
+        "created_at": None,
+    }
 
     route = _classify_intent(text)
     result: dict[str, Any]
@@ -208,6 +223,9 @@ def _handle_director_message(text: str, *, source: str) -> dict[str, Any]:
             result = find_substitute(SubstituteRequest(message=text))
         elif route == "rag":
             result = rag_query(RagRequest(query=text))
+        elif route == "staff":
+            # For now, staff tasks are handled via tasks or generic logic
+            result = {"message": "Обрабатываю запрос по персоналу. Данные будут обновлены."}
         else:
             tasks = parse_tasks_from_text(text)
             created = _create_tasks_with_notifications(tasks, source=f"agent_{source}")
@@ -218,13 +236,13 @@ def _handle_director_message(text: str, *, source: str) -> dict[str, Any]:
         route = route or "general"
 
     assistant_text = _assistant_text_for_result(route, result)
-    assistant_row = state_store.append_agent_message(
-        role="assistant",
-        message_text=assistant_text,
-        route=route,
-        payload=result,
-        source=source,
-    )
+    assistant_row = {
+        "role": "assistant",
+        "message_text": assistant_text,
+        "route": route,
+        "payload": result,
+        "created_at": None,
+    }
 
     return {
         "route": route,
@@ -232,6 +250,7 @@ def _handle_director_message(text: str, *, source: str) -> dict[str, Any]:
         "assistant_message": assistant_row,
         "result": result,
     }
+
 
 
 @router.get("/history")

@@ -1,144 +1,142 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bot, MessageCircle, Mic, X, Send, Minimize2 } from 'lucide-react'
+import {
+  Bot, Mic, X, Send, Loader2,
+  Users, AlertTriangle, Calendar, BookOpen, UserCheck,
+} from 'lucide-react'
 
-type AgentMessage = {
+/* ── маршруты, которые AI умеет определять ── */
+const ROUTES: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+  attendance:    { label: 'Посещаемость', icon: Users,          color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+  incidents:     { label: 'Инциденты',   icon: AlertTriangle,   color: '#EF4444', bg: 'rgba(239,68,68,0.15)'  },
+  schedule:      { label: 'Расписание',  icon: Calendar,        color: '#6366F1', bg: 'rgba(99,102,241,0.15)' },
+  rag:           { label: 'Приказы RAG', icon: BookOpen,        color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  staff:         { label: 'Сотрудники',  icon: UserCheck,       color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
+}
+
+type ResultEntry = {
   id: string
-  sender_name: string
-  message_text: string
-  parsed_type?: string | null
-  parsed_data?: {
-    route?: string
-    source?: string
-    payload?: Record<string, unknown>
-  } | null
-  created_at?: string | null
+  type: 'user' | 'ai'
+  text: string
+  route?: string
+  loading?: boolean
 }
 
-type AgentResponse = {
-  route: string
-  transcript?: string
-  assistant_message?: AgentMessage | null
-  result?: Record<string, unknown>
-}
+const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000'
 
 export default function DirectorAgentWidget() {
   const pathname = usePathname()
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const router   = useRouter()
+  const [open, setOpen]         = useState(false)
+  const [loading, setLoading]   = useState(false)
   const [recording, setRecording] = useState(false)
-  const [text, setText] = useState('')
-  const [messages, setMessages] = useState<AgentMessage[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const [text, setText]         = useState('')
+  const [results, setResults]   = useState<ResultEntry[]>([])
+  const [error, setError]       = useState<string | null>(null)
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const chunksRef = useRef<Blob[]>([])
+  const streamRef        = useRef<MediaStream | null>(null)
+  const chunksRef        = useRef<Blob[]>([])
+  const inputRef         = useRef<HTMLTextAreaElement>(null)
 
   const hidden = pathname === '/' || pathname === '/whatsapp'
 
-  async function loadHistory() {
-    try {
-      const response = await fetch('/api/agent/history?limit=80', { cache: 'no-store' })
-      if (!response.ok) return
-      const data = await response.json()
-      setMessages(data.messages || [])
-    } catch {
-      // noop
-    }
+  /* ── добавить ИИ-ответ ── */
+  function addAI(text: string, route?: string) {
+    setResults(prev => [...prev, { id: Date.now().toString(), type: 'ai', text, route }])
   }
 
-  useEffect(() => {
-    if (!hidden) {
-      loadHistory()
-    }
-  }, [hidden])
-
-  useEffect(() => {
-    if (!open) return
-    const node = scrollRef.current
-    if (node) {
-      node.scrollTop = node.scrollHeight
-    }
-  }, [messages, open])
-
-  async function sendTextMessage() {
-    if (!text.trim() || loading) return
-    setLoading(true)
+  /* ── отправить текст ── */
+  async function sendText() {
+    const msg = text.trim()
+    if (!msg || loading) return
+    setText('')
     setError(null)
+    setResults(prev => [...prev, { id: Date.now().toString(), type: 'user', text: msg }])
+    setLoading(true)
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 25000)
     try {
-      const response = await fetch('/api/agent/message', {
+      const res = await fetch('/api/agent/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: msg }),
+        signal: controller.signal,
       })
-      if (!response.ok) throw new Error('Не удалось обработать сообщение')
-      const data = (await response.json()) as AgentResponse
-      setText('')
-      await loadHistory()
+      clearTimeout(timer)
+      if (!res.ok) throw new Error('Сервер недоступен')
+      const data = await res.json()
+      addAI(
+        data.assistant_message?.message_text || 'Выполнено.',
+        data.route,
+      )
       router.refresh()
-      if (data.route === 'rag') {
-        setOpen(true)
+    } catch (e) {
+      clearTimeout(timer)
+      if (e instanceof Error && e.name === 'AbortError') {
+        setError('Время ожидания истекло (25 сек). Попробуйте снова.')
+      } else {
+        setError(e instanceof Error ? e.message : 'Ошибка')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка отправки')
     } finally {
       setLoading(false)
     }
   }
 
+  /* ── загрузить аудио ── */
   async function uploadAudio(blob: Blob, mimeType: string) {
     setLoading(true)
     setError(null)
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 30000)
     try {
-      const formData = new FormData()
-      formData.append('file', new File([blob], 'director-agent.webm', { type: mimeType }))
-      const response = await fetch('/api/agent/message-audio', {
-        method: 'POST',
-        body: formData,
-      })
-      if (!response.ok) throw new Error('Не удалось обработать голосовое сообщение')
-      await response.json()
-      await loadHistory()
+      const form = new FormData()
+      form.append('file', new File([blob], 'voice.webm', { type: mimeType }))
+      const res = await fetch('/api/agent/message-audio', { method: 'POST', body: form, signal: controller.signal })
+      clearTimeout(timer)
+      if (!res.ok) throw new Error('Голосовая обработка не удалась')
+      const data = await res.json()
+      const transcript = data.transcript || '(голосовое сообщение)'
+      setResults(prev => [...prev, { id: Date.now().toString(), type: 'user', text: `Голос: ${transcript}` }])
+      addAI(
+        data.assistant_message?.message_text || 'Выполнено.',
+        data.route,
+      )
       router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка обработки голоса')
+    } catch (e) {
+      clearTimeout(timer)
+      if (e instanceof Error && e.name === 'AbortError') {
+        setError('Время ожидания истекло (30 сек). Попробуйте снова.')
+      } else {
+        setError(e instanceof Error ? e.message : 'Ошибка голоса')
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  /* ── запись ── */
   async function startRecording() {
     if (loading || recording) return
-    if (typeof window === 'undefined' || typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      setError('Запись с микрофона не поддерживается')
-      return
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
       chunksRef.current = []
-      const recorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = recorder
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data)
+      const rec = new MediaRecorder(stream)
+      mediaRecorderRef.current = rec
+      rec.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      rec.onstop = async () => {
+        const mime = rec.mimeType || 'audio/webm'
+        const blob = new Blob(chunksRef.current, { type: mime })
+        streamRef.current?.getTracks().forEach(t => t.stop())
+        if (blob.size > 0) await uploadAudio(blob, mime)
       }
-      recorder.onstop = async () => {
-        const mimeType = recorder.mimeType || 'audio/webm'
-        const blob = new Blob(chunksRef.current, { type: mimeType })
-        streamRef.current?.getTracks().forEach((track) => track.stop())
-        streamRef.current = null
-        if (blob.size > 0) {
-          await uploadAudio(blob, mimeType)
-        }
-      }
-      recorder.start()
+      rec.start()
       setRecording(true)
     } catch {
-      setError('Не удалось получить доступ к микрофону')
+      setError('Нет доступа к микрофону')
     }
   }
 
@@ -148,224 +146,294 @@ export default function DirectorAgentWidget() {
     mediaRecorderRef.current.stop()
   }
 
+  function handleKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText() }
+  }
+
   if (hidden) return null
 
+  /* ══════ RENDER ══════ */
   return (
     <>
-      {!open ? (
+      {/* ── Кнопка-триггер ── */}
+      {!open && (
         <button
           onClick={() => setOpen(true)}
+          aria-label="Открыть AI-ассистент"
           style={{
-            position: 'fixed',
-            right: 22,
-            bottom: 22,
-            width: 64,
-            height: 64,
+            position: 'fixed', right: 22, bottom: 22,
+            width: 58, height: 58,
             borderRadius: '50%',
             border: 'none',
-            background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
             color: '#fff',
-            boxShadow: '0 20px 40px rgba(37,99,235,0.35)',
-            zIndex: 120,
+            boxShadow: '0 8px 32px rgba(99,102,241,0.45)',
+            zIndex: 200,
             cursor: 'pointer',
-          }}
-          aria-label="Открыть AI-чат директора"
-        >
-          <Bot size={28} style={{ marginTop: 2 }} />
-        </button>
-      ) : (
-        <div
-          style={{
-            position: 'fixed',
-            right: 18,
-            bottom: 18,
-            width: 'min(420px, calc(100vw - 24px))',
-            height: 'min(72vh, 680px)',
-            background: '#fff',
-            border: '1px solid rgba(15,23,42,0.08)',
-            borderRadius: 20,
-            boxShadow: '0 30px 80px rgba(15,23,42,0.18)',
-            zIndex: 120,
-            overflow: 'hidden',
             display: 'flex',
-            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 12px 40px rgba(99,102,241,0.6)'
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'
+            ;(e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(99,102,241,0.45)'
           }}
         >
-          <div
-            style={{
-              padding: '14px 16px',
-              background: 'linear-gradient(135deg, #0F172A, #1D4ED8)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
+          <Bot size={26} />
+        </button>
+      )}
+
+      {/* ── Панель ── */}
+      {open && (
+        <div style={{
+          position: 'fixed', right: 18, bottom: 18,
+          width: 'min(420px, calc(100vw - 24px))',
+          height: 'min(68vh, 620px)',
+          background: '#0F1123',
+          border: '1px solid rgba(99,102,241,0.25)',
+          borderRadius: 20,
+          boxShadow: '0 24px 80px rgba(0,0,0,0.7)',
+          zIndex: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}>
+
+          {/* ── Хедер ── */}
+          <div style={{
+            padding: '12px 16px',
+            background: 'linear-gradient(135deg, #1a1b3a, #1e1f42)',
+            borderBottom: '1px solid rgba(99,102,241,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 12,
-                  background: 'rgba(255,255,255,0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <MessageCircle size={18} />
+              <div style={{
+                width: 36, height: 36, borderRadius: 11,
+                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <Bot size={18} color="#fff" />
               </div>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 15 }}>AI-чат директора</div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>
-                  Задачи, инциденты, замены, приказы №76/110/130
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#F1F5F9', lineHeight: 1.2 }}>
+                  AI-Директор
+                </div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 1 }}>
+                  Голос или текст — пойму сам
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button
-                onClick={() => setOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}
-                aria-label="Свернуть чат"
-              >
-                <Minimize2 size={18} />
-              </button>
-              <button
-                onClick={() => setOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}
-                aria-label="Закрыть чат"
-              >
-                <X size={18} />
-              </button>
-            </div>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Закрыть"
+              style={{
+                background: 'rgba(255,255,255,0.07)', border: 'none',
+                color: '#94A3B8', cursor: 'pointer',
+                width: 30, height: 30, borderRadius: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.13)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+            >
+              <X size={16} />
+            </button>
           </div>
 
-          <div
-            ref={scrollRef}
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '16px 14px',
-              background: 'linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-            }}
-          >
-            {messages.length === 0 ? (
-              <div style={{ color: '#64748B', fontSize: 13, lineHeight: 1.5 }}>
-                Напиши или надиктуй сообщение. Я сам пойму, это инцидент, задача, замена учителя или вопрос по приказам.
+          {/* ── Быстрые категории ── */}
+          <div style={{
+            padding: '10px 14px 8px',
+            display: 'flex', gap: 6, flexWrap: 'wrap',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+          }}>
+            {Object.entries(ROUTES).map(([key, r]) => {
+              const Icon = r.icon
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setText(r.label + ': ')
+                    inputRef.current?.focus()
+                  }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '4px 10px', borderRadius: 20,
+                    background: r.bg, border: 'none',
+                    color: r.color, fontSize: 11, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: 'Figtree, sans-serif',
+                  }}
+                >
+                  <Icon size={11} />
+                  {r.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ── Лента результатов ── */}
+          <div style={{
+            flex: 1, overflowY: 'auto',
+            padding: '14px',
+            display: 'flex', flexDirection: 'column', gap: 10,
+          }}>
+            {results.length === 0 && (
+              <div style={{
+                margin: 'auto',
+                textAlign: 'center',
+                color: '#475569',
+                fontSize: 13,
+                lineHeight: 1.6,
+                padding: '0 16px',
+              }}>
+                <Bot size={32} color="#2D2F5A" style={{ marginBottom: 10 }} />
+                <div style={{ color: '#64748B', fontWeight: 600, marginBottom: 6 }}>Скажите или напишите</div>
+                <div>Я сам определю — Посещаемость, Инцидент, Замена, Приказ или Сотрудник — и выполню.</div>
               </div>
-            ) : (
-              messages.map((message) => {
-                const isUser = message.sender_name === 'Директор'
-                return (
-                  <div
-                    key={message.id}
-                    style={{
-                      alignSelf: isUser ? 'flex-end' : 'flex-start',
-                      maxWidth: '88%',
-                      background: isUser ? '#1D4ED8' : '#fff',
-                      color: isUser ? '#fff' : '#0F172A',
-                      borderRadius: 18,
-                      padding: '10px 12px',
-                      boxShadow: isUser ? '0 10px 24px rgba(37,99,235,0.18)' : '0 8px 18px rgba(15,23,42,0.06)',
-                    }}
-                  >
-                    <div style={{ fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                      {message.message_text}
+            )}
+
+            {results.map(r => {
+              const isUser = r.type === 'user'
+              const routeInfo = r.route ? ROUTES[r.route] : null
+              const RouteIcon = routeInfo?.icon
+              return (
+                <div key={r.id} style={{
+                  alignSelf: isUser ? 'flex-end' : 'flex-start',
+                  maxWidth: '88%',
+                }}>
+                  {/* маршрут-чип */}
+                  {routeInfo && RouteIcon && (
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '2px 8px', borderRadius: 20,
+                      background: routeInfo.bg, color: routeInfo.color,
+                      fontSize: 10, fontWeight: 800,
+                      marginBottom: 4,
+                      textTransform: 'uppercase', letterSpacing: '0.04em',
+                    }}>
+                      <RouteIcon size={9} /> {routeInfo.label}
                     </div>
-                    <div
-                      style={{
-                        marginTop: 6,
-                        fontSize: 11,
-                        opacity: 0.72,
-                        display: 'flex',
-                        gap: 8,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <span>{isUser ? 'Директор' : 'AI-завуч'}</span>
-                      {message.parsed_data?.route ? <span>{message.parsed_data.route}</span> : null}
-                    </div>
+                  )}
+                  <div style={{
+                    background: isUser
+                      ? 'linear-gradient(135deg, #4F46E5, #6D28D9)'
+                      : 'rgba(255,255,255,0.05)',
+                    color: isUser ? '#fff' : '#CBD5E1',
+                    border: isUser ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: isUser ? '16px 16px 4px 16px' : '4px 16px 16px 16px',
+                    padding: '10px 13px',
+                    fontSize: 13, lineHeight: 1.55,
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {r.text}
                   </div>
-                )
-              })
+                </div>
+              )
+            })}
+
+            {loading && (
+              <div style={{
+                alignSelf: 'flex-start',
+                display: 'flex', alignItems: 'center', gap: 8,
+                color: '#64748B', fontSize: 13,
+                padding: '8px 12px',
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: '4px 16px 16px 16px',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}>
+                <Loader2 size={14} style={{ animation: 'spin 0.7s linear infinite' }} />
+                Обрабатываю...
+              </div>
             )}
           </div>
 
-          <div style={{ padding: 12, borderTop: '1px solid rgba(15,23,42,0.06)', background: '#fff' }}>
-            {error ? (
-              <div style={{ color: '#DC2626', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
+          {/* ── Ввод ── */}
+          <div style={{
+            padding: '10px 12px',
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            background: '#0C0D1E',
+          }}>
+            {error && (
+              <div style={{ color: '#FCA5A5', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
                 {error}
               </div>
-            ) : null}
+            )}
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
               <textarea
+                ref={inputRef}
                 value={text}
-                onChange={(event) => setText(event.target.value)}
-                placeholder="Например: Учитель математики Аскар заболел, его сегодня не будет"
+                onChange={e => setText(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Напр.: Учитель Аскар заболел, его сегодня не будет"
+                rows={2}
+                disabled={loading || recording}
                 style={{
                   flex: 1,
-                  minHeight: 52,
-                  maxHeight: 140,
-                  resize: 'vertical',
-                  borderRadius: 14,
-                  border: '1px solid rgba(148,163,184,0.35)',
-                  padding: '12px 14px',
-                  fontSize: 14,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#F1F5F9',
+                  borderRadius: 12,
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  fontFamily: 'Figtree, sans-serif',
+                  resize: 'none',
                   outline: 'none',
+                  lineHeight: 1.5,
                 }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
               />
-              {!recording ? (
-                <button
-                  onClick={startRecording}
-                  disabled={loading}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 14,
-                    border: '1px solid rgba(37,99,235,0.16)',
-                    background: '#EFF6FF',
-                    color: '#1D4ED8',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Mic size={18} />
-                </button>
-              ) : (
-                <button
-                  onClick={stopRecording}
-                  disabled={loading}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 14,
-                    border: '1px solid rgba(220,38,38,0.18)',
-                    background: '#FEE2E2',
-                    color: '#B91C1C',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Mic size={18} />
-                </button>
-              )}
+
+              {/* Кнопка микрофона */}
               <button
-                onClick={sendTextMessage}
-                disabled={loading || !text.trim()}
+                onClick={recording ? stopRecording : startRecording}
+                disabled={loading}
+                aria-label={recording ? 'Остановить запись' : 'Начать запись'}
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: loading ? '#94A3B8' : '#2563EB',
-                  color: '#fff',
+                  width: 44, height: 44, borderRadius: 12, border: 'none',
+                  background: recording
+                    ? 'linear-gradient(135deg, #EF4444, #DC2626)'
+                    : 'rgba(99,102,241,0.15)',
+                  color: recording ? '#fff' : '#818CF8',
                   cursor: loading ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.2s',
+                  boxShadow: recording ? '0 0 0 3px rgba(239,68,68,0.25)' : 'none',
                 }}
               >
-                <Send size={18} />
+                <Mic size={18} />
               </button>
+
+              {/* Кнопка отправки */}
+              <button
+                onClick={sendText}
+                disabled={loading || !text.trim()}
+                aria-label="Отправить"
+                style={{
+                  width: 44, height: 44, borderRadius: 12, border: 'none',
+                  background: text.trim() && !loading
+                    ? 'linear-gradient(135deg, #6366F1, #4F46E5)'
+                    : 'rgba(255,255,255,0.07)',
+                  color: text.trim() && !loading ? '#fff' : '#475569',
+                  cursor: text.trim() && !loading ? 'pointer' : 'default',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.15s',
+                  boxShadow: text.trim() && !loading
+                    ? '0 4px 14px rgba(99,102,241,0.35)'
+                    : 'none',
+                }}
+              >
+                <Send size={17} />
+              </button>
+            </div>
+            <div style={{ fontSize: 10, color: '#334155', marginTop: 6, paddingLeft: 2 }}>
+              Enter — отправить · Shift+Enter — перенос строки
             </div>
           </div>
         </div>

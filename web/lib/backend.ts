@@ -76,12 +76,17 @@ export async function safeBackendJson<T>(
 
 export async function proxyBackend(request: Request, targetPath: string): Promise<Response> {
   const url = new URL(request.url)
+  const controller = new AbortController()
+  // 20-секундный таймаут на сервере (меньше чем 25 сек у клиента)
+  const timer = setTimeout(() => controller.abort(), 20000)
+
   const init: RequestInit = {
     method: request.method,
     headers: {
       Accept: 'application/json',
     },
     cache: 'no-store',
+    signal: controller.signal,
   }
 
   const contentType = request.headers.get('content-type')
@@ -94,16 +99,25 @@ export async function proxyBackend(request: Request, targetPath: string): Promis
     init.body = bytes.byteLength > 0 ? bytes : undefined
   }
 
-  const response = await fetch(
-    buildBackendUrl(targetPath, Object.fromEntries(url.searchParams.entries())),
-    init,
-  )
-  const responseText = await response.text()
-
-  return new Response(responseText, {
-    status: response.status,
-    headers: {
-      'content-type': response.headers.get('content-type') || 'application/json; charset=utf-8',
-    },
-  })
+  try {
+    const response = await fetch(
+      buildBackendUrl(targetPath, Object.fromEntries(url.searchParams.entries())),
+      init,
+    )
+    clearTimeout(timer)
+    const responseText = await response.text()
+    return new Response(responseText, {
+      status: response.status,
+      headers: {
+        'content-type': response.headers.get('content-type') || 'application/json; charset=utf-8',
+      },
+    })
+  } catch (err) {
+    clearTimeout(timer)
+    const isTimeout = err instanceof Error && err.name === 'AbortError'
+    return new Response(
+      JSON.stringify({ detail: isTimeout ? 'Сервер не успел ответить (таймаут)' : 'Ошибка соединения с сервером' }),
+      { status: 504, headers: { 'content-type': 'application/json' } },
+    )
+  }
 }

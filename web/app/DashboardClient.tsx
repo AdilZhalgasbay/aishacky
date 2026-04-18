@@ -142,7 +142,7 @@ export default function DashboardClient() {
       setLoading(false)
     }
     load()
-    const interval = setInterval(load, 30000)
+    const interval = setInterval(load, 60 * 1000) // 1 минута
     return () => clearInterval(interval)
   }, [today])
 

@@ -11,14 +11,19 @@ api/llm.py
 import os
 import json
 import re
+import httpx
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Явный таймаут: 5 сек на соединение, 15 сек на чтение ответа
+_TIMEOUT = httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=2.0)
+
 client = OpenAI(
     base_url=os.getenv("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1"),
     api_key=os.getenv("DEEPSEEK_API_KEY"),
+    http_client=httpx.Client(timeout=_TIMEOUT),
 )
 
 MODEL = "nvidia/llama-3.1-nemotron-nano-8b-v1"
@@ -39,7 +44,6 @@ def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: st
             top_p=0.95,
             max_tokens=max_tokens,
             stream=False,
-            timeout=12.0
         )
         raw = completion.choices[0].message.content or ""
         # Remove deep thinking tags
