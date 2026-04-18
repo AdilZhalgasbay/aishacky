@@ -1,0 +1,13 @@
+fastapi[all]
+uvicorn
+pydantic
+openai
+langchain
+langchain-community
+langchain-openai
+faiss-cpu
+python-dotenv
+playwright
+apscheduler
+httpx
+pytest

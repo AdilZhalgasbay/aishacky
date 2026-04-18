@@ -1,0 +1,74 @@
+--- EMPLOYEES (58) ---
+ID: f51be633-9738-46a2-b1b6-705a48067e04 | Name: Кайрат Джаксыбеков | Role: canteen_manager
+ID: 0e31f4d2-c8d6-4c0a-95de-6f992880e06b | Name: Айгуль Сейткали | Role: director
+ID: 9fef185a-c0c7-451d-83d9-4c1244ac2aca | Name: Азамат IT-қызмет | Role: it_specialist
+ID: af9bd1b5-159d-478a-8ba7-c35c066c437d | Name: Алибек Сатыбалды | Role: methodist
+ID: 3369d9fe-7d52-4eae-b72d-536e6dacc43f | Name: Рашида Мусина | Role: nurse
+ID: 691afe77-9bd3-4db0-9d13-63442d100a70 | Name: Динара Байжанова | Role: secretary
+ID: 45e34306-77bb-4433-99bc-894ffa59d91d | Name: Служба охраны | Role: security
+ID: 7e221eeb-e557-4be5-8227-221f62cb296a | Name: Аділов Тлепберген Бекболұлы | Role: teacher
+ID: 80b5440d-a72b-4b95-8b48-1a9dcb7fb14f | Name: Айгерим Токова | Role: teacher
+ID: 3eb223c3-c37f-4c42-a283-e1a745e2db4f | Name: Ақырап Ақерке | Role: teacher
+ID: 53ac05e1-0a9e-4d12-b033-4e64e7fb4e64 | Name: Алия Бекова | Role: teacher
+ID: 1ca8030e-5355-4945-9535-7212f1140e7a | Name: Аманғазы Сәнім | Role: teacher
+ID: 05defa42-d563-4d41-9c9a-c520af38c41a | Name: Арыстанғалиқызы Ақмарал | Role: teacher
+ID: b9e0c63b-c638-4fdf-8ddc-597d733faa87 | Name: Аскар Бейсенов | Role: teacher
+ID: 99b7b343-e61b-4be4-b795-a7737fa9791b | Name: Ахметова Индира | Role: teacher
+ID: fe048ef3-8940-4fce-bb2c-d8efe78199cc | Name: Байдирахманова Б.С | Role: teacher
+ID: aa911cb4-1cd9-451d-9339-f51af718a65b | Name: Бактыгулов Аманжол | Role: teacher
+ID: 32bf875c-54b6-4c9a-86f1-dee6834027af | Name: Балтабай Жанболат Бекболатұлы | Role: teacher
+ID: 3c6d5978-de79-422b-8af4-84e464140650 | Name: Бибигуль Ахметова | Role: teacher
+ID: f8bf5473-3a3d-4726-98cd-242b073521dc | Name: Болат Рахимов | Role: teacher
+ID: 237c4467-7118-42d1-8d96-e8896f0a44ee | Name: Гореева Альфия Махмудовна(AIS)(до обеда) | Role: teacher
+ID: 4890df65-22be-44c6-a259-b69c50c7aa02 | Name: Гульнара Омарова | Role: teacher
+ID: 23fd473f-0847-4b37-9116-f053109e8776 | Name: Дамир Жумабеков | Role: teacher
+ID: 515a8bd1-b210-43dc-98b4-4440befd50bd | Name: Даулетбаева Сая | Role: teacher
+ID: af11a3c1-6425-4489-96f4-3e778ad7ae64 | Name: Душманова А.Қ. | Role: teacher
+ID: 58f10375-0f07-4233-8919-4cbe347334f6 | Name: Ерлан Қуанович | Role: teacher
+ID: fd08d99f-b05d-4d9b-a523-889d5312a48c | Name: Есалина Айзада | Role: teacher
+ID: 347d8d4b-5bd4-4501-8be5-59e509ac2acb | Name: Жадырасын Ернұр | Role: teacher
+ID: 0a60334b-7673-439b-a8f1-813835c1357f | Name: Жанна Есимова | Role: teacher
+ID: 9c6ddf27-7b19-4eaa-b113-4d7970cc28ce | Name: Жаулбаев А.З. | Role: teacher
+ID: f8e6524f-f0a4-4a24-adfd-fb103d2e46c7 | Name: Жоламан Мейрамбек | Role: teacher
+ID: 2745a9a5-d3d7-4237-9759-442a24a86cfa | Name: Жомартова Айым Кайратқызы(куратор) | Role: teacher
+ID: 567f821f-9d79-4e80-9df9-a026a805907c | Name: Иван Оралсын | Role: teacher
+ID: f86f1b48-a500-4e80-aa75-5cd0270cd1fa | Name: Караева Аружан | Role: teacher
+ID: 75a8dd68-22c0-42e9-81b7-2eb6b5536d1f | Name: Қазиев Нұртлеу | Role: teacher
+ID: a2ba96a2-d3bc-49c1-9479-abdcbbb471e1 | Name: Қайыржанова Аружан | Role: teacher
+ID: 212e263c-5043-40ec-9cb9-5f086ee58f4f | Name: Қайырқұлов Нұрсұлтан Амангелдіұлы | Role: teacher
+ID: 54bd7132-8711-4279-a1bf-cfd6710cd142 | Name: Қангерей Қанат | Role: teacher
+ID: e7090052-7ab4-41ac-8a65-ea4549af8353 | Name: Қарабай Айбат Нұрлыбайұлы | Role: teacher
+ID: 4b7f82f7-33c4-4610-9e94-b6f690bd9f2f | Name: Қойшан Ырысжан Асқарбекқызы | Role: teacher
+ID: d1569926-71d4-41f2-92e1-459598133816 | Name: Ляззат Дюсенова | Role: teacher
+ID: 33dd566f-543d-4e38-929a-b03aa371020d | Name: Марат Ибрагимов | Role: teacher
+ID: 3d5f4b4a-d922-42ff-ae54-49bc1465abd6 | Name: Матигулова Гульсара Бактыбергеновна | Role: teacher
+ID: 0e437d77-3f8b-4a0a-8090-a70b2acdac21 | Name: Нажмадинов Марат | Role: teacher
+ID: 9c9a91ce-2eb2-4e57-ac29-22f2c03637b3 | Name: Назаров Дастан | Role: teacher
+ID: b9720e79-9171-4dd5-ad10-b4afe12111d5 | Name: Назкен Алибекова | Role: teacher
+ID: 5c46909e-4bf7-4157-839a-cb57310283a4 | Name: Нуркен Сагиндыков | Role: teacher
+ID: aa87d14d-fc90-4834-a265-55b90ab0fc32 | Name: Сапар Елжан Шакизадаұлы | Role: teacher
+ID: 7e17bde3-e226-4f5c-9165-da6ce1be99fb | Name: Сарқытбаев Н. | Role: teacher
+ID: aefa4f0b-ed12-4bc9-9066-cd80a676b681 | Name: Серик Касымов | Role: teacher
+ID: c776729e-0a54-49f2-9ad5-44126b40841e | Name: Сулейманов Бегдулла | Role: teacher
+ID: e8340236-8f86-4d8c-8d67-1aa3b0ec742f | Name: Сунгариева Айгерим Бисенбаевна | Role: teacher
+ID: e3b25a57-ec82-4a22-91fa-73d1061035ac | Name: Таңатар Мадина | Role: teacher
+ID: 45aac3db-9916-46fe-b548-63d1d92c734c | Name: Толеген Нурмагамбетов | Role: teacher
+ID: 1928f22e-88b7-4b4d-b0b5-70c469dc1a40 | Name: Утенова Куралай | Role: teacher
+ID: 385334d2-79d2-487e-ad03-1cf93136ebf7 | Name: Халелова Анель(куратор) | Role: teacher
+ID: 42756a77-7111-4a00-9cf3-3920c96c1c6a | Name: Шарафадинова Айжан Мырзабекқызы | Role: teacher
+ID: 25a130b2-e0f8-4035-9792-35322e667e66 | Name: Канат Эрбосынов | Role: zavhoz
+
+--- CLASSES (13) ---
+ID: dcf14047-45bc-4acb-8849-6f14023c6095 | Name: 7A | Students: 22
+ID: 5d50f0a6-4e7c-4da7-afc8-dd56f9491387 | Name: 7B | Students: 22
+ID: dfeed10d-2b05-4ee3-b335-4cbfe85dfbc1 | Name: 7C | Students: 21
+ID: ad840631-7f3e-42b0-8b11-9dc4dc3ac4f6 | Name: 8A | Students: 25
+ID: 3905d7a3-ad8e-4e1c-9467-b77d4fa3426f | Name: 8B | Students: 25
+ID: 35cca26e-6a48-4985-a893-6f7559fb2a68 | Name: 8C | Students: 24
+ID: f9103372-e531-45e7-8398-736d75b91e81 | Name: 8D | Students: 24
+ID: c86b2d0f-f332-43a8-9b7d-42ed60560714 | Name: 9A | Students: 25
+ID: 52fcc744-bf8e-4204-b5b1-f0dd4ad47e42 | Name: 9B | Students: 28
+ID: 25d1568d-a72e-46ab-b1dd-df4ed1805d41 | Name: 10A | Students: 36
+ID: 4905c571-f476-49e5-bb2c-945ffc33c824 | Name: 10B | Students: 22
+ID: 3bbe5de2-05e2-470f-a290-5031aaf5c7b7 | Name: 11A | Students: 22
+ID: a1c0eb81-3a2d-47ea-9a96-0f7f9d373f84 | Name: 11B | Students: 22
