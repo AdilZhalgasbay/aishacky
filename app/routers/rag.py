@@ -34,19 +34,29 @@ def rag_query(req: RagRequest):
 Дай чёткий, понятный ответ. Если нужен чек-лист — используй пронумерованный список."""
 
     answer = chat(SYSTEM, prompt, max_tokens=1024)
-    docs = state_store.list_regulation_docs()
+    # Keyword map: unique markers in each .txt file → (doc_name, doc_number)
+    DOC_KEYWORDS: list[tuple[list[str], str, str]] = [
+        (["№76", "76 ", "профессиональный стандарт", "квалификационные требования"], "Приказ МОН РК", "76"),
+        (["№110", "110 ", "санитарные правила", "СанПиН", "санитарно-эпидемиологические"], "Приказ МЗ РК", "110"),
+        (["№130", "130 ", "типовые правила", "нулевые уроки", "учебная нагрузка", "ч/нед", "перемен"], "Приказ МОН РК", "130"),
+    ]
+
+    def _detect_doc(text: str) -> tuple[str, str]:
+        text_lower = text.lower()
+        for keywords, doc_name, doc_number in DOC_KEYWORDS:
+            if any(kw.lower() in text_lower for kw in keywords):
+                return doc_name, doc_number
+        return "Нормативный документ", "—"
+
     sources = []
     for result in results:
-        match = next(
-            (doc for doc in docs if result["text"][:120] in doc["content"]),
-            None,
-        )
+        doc_name, doc_number = _detect_doc(result["text"])
         sources.append(
             {
                 "text": result["text"][:200] + "...",
                 "score": result["score"],
-                "doc_name": match["doc_name"] if match else "Нормативный документ",
-                "doc_number": match["doc_number"] if match else "—",
+                "doc_name": doc_name,
+                "doc_number": doc_number,
             }
         )
     return {
