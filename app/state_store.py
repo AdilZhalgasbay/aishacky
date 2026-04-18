@@ -863,6 +863,40 @@ def list_telegram_messages(limit: int = 50) -> list[dict[str, Any]]:
     )
 
 
+@locked_state
+def append_agent_message(
+    *,
+    role: str,
+    message_text: str,
+    route: str | None = None,
+    payload: dict[str, Any] | None = None,
+    source: str = "text",
+) -> dict[str, Any]:
+    sender_name = "Директор" if role == "user" else "AI-завуч"
+    parsed_data = {
+        "route": route,
+        "source": source,
+        "payload": payload or {},
+    }
+    return append_telegram_message(
+        sender_name=sender_name,
+        message_text=message_text,
+        parsed_type=f"director_agent_{role}",
+        parsed_data=parsed_data,
+    )
+
+
+def list_agent_messages(limit: int = 100) -> list[dict[str, Any]]:
+    rows = list_telegram_messages(limit=max(limit * 4, 100))
+    filtered = [
+        row
+        for row in rows
+        if str(row.get("parsed_type") or "").startswith("director_agent_")
+    ]
+    filtered.reverse()
+    return filtered[-limit:]
+
+
 def list_schedule_rows() -> list[dict[str, Any]]:
     schedules = _fetch_rows("schedules", params={"select": "*", "order": "day_of_week.asc,period.asc"})
     class_map = _classes_by_id()

@@ -33,14 +33,14 @@ def parse_attendance(req: AttendanceRequest):
 {text}
 
 Верни JSON:
-{
+{{
   "date": "{today}",
   "total_portions": 0,
   "total_absent": 0,
   "classes": [
-    {"class": "название", "present": 0, "absent": 0}
+    {{"class": "название", "present": 0, "absent": 0}}
   ]
-}"""
+}}"""
 
     result = chat_json(SYSTEM, prompt)
     result.setdefault("date", today)

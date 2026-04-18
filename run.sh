@@ -1,5 +1,5 @@
 #!/bin/bash
-# run.sh — запускает сервер + serveo туннель вместе
+# run.sh — запускает Next.js + wa-bot + FastAPI + serveo туннель
 # Использование: bash run.sh
 
 set -e
@@ -7,11 +7,10 @@ cd "$(dirname "$0")"
 
 source .venv/bin/activate
 
-if [ -f .env ]; then
-  export TELEGRAM_TOKEN="$(grep -E '^TELEGRAM_TOKEN=' .env | cut -d '=' -f2-)"
+if [ ! -f .env ]; then
+  echo "⚠️  Файл .env не найден!"
 fi
 
-TOKEN="${TELEGRAM_TOKEN:-}"
 WEB_PID=""
 
 ensure_port_free() {
@@ -26,11 +25,6 @@ ensure_port_free() {
 ensure_port_free 3000
 ensure_port_free 8000
 ensure_port_free 3001
-
-if [ -z "$TOKEN" ]; then
-  echo "❌ TELEGRAM_TOKEN не задан. Укажи его в .env или окружении."
-  exit 1
-fi
 
 echo "🖥️ Запуск Next.js dashboard..."
 cd web
@@ -52,7 +46,6 @@ SERVER_PID=$!
 sleep 3
 
 echo "🌐 Открываем serveo туннель..."
-# Запускаем в фоне и захватываем URL
 SSH_LOG=$(mktemp)
 ssh -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=60 \
@@ -71,21 +64,12 @@ fi
 
 echo "✅ Туннель: $PUBLIC_URL"
 
-# Регистрируем webhook
-WEBHOOK="$PUBLIC_URL/webhook/telegram"
-python3 -c "
-import requests
-r = requests.post('https://api.telegram.org/bot${TOKEN}/setWebhook',
-    json={'url': '$WEBHOOK', 'allowed_updates': ['message']}, timeout=15)
-print('webhook:', r.json().get('description', r.json()))
-"
-
 echo ""
 echo "=========================================="
-echo "🖥️ Dashboard: http://localhost:3000"
-echo "📖 Swagger: $PUBLIC_URL/docs"
-echo "🤖 Бот: @ScheduleAL_bot"
-echo "📱 Пиши в группу: '1А — 25 детей, 2 болеют'"
+echo "🖥️ Dashboard:  http://localhost:3000"
+echo "📱 WhatsApp:   http://localhost:3000/whatsapp"
+echo "📖 Swagger:    $PUBLIC_URL/docs"
+echo "📩 Пиши в группу: '1А — 25 детей, 2 болеют'"
 echo "=========================================="
 echo "Ctrl+C для остановки"
 

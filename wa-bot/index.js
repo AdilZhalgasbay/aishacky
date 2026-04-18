@@ -104,6 +104,32 @@ app.get('/status', (req, res) => {
     res.json({ isReady: isClientReady, qr: latestQR });
 });
 
+app.post('/send', async (req, res) => {
+    if (!isClientReady) {
+        return res.status(503).json({ error: 'WhatsApp client is not ready yet' });
+    }
+    const { group_name, message } = req.body;
+    if (!group_name || !message) {
+        return res.status(400).json({ error: 'group_name and message are required' });
+    }
+    try {
+        const chats = await client.getChats();
+        const target = chats.find(c => c.isGroup && (
+            c.name.toLowerCase() === group_name.toLowerCase() ||
+            c.name.toLowerCase().includes(group_name.toLowerCase())
+        ));
+        if (!target) {
+            return res.status(404).json({ error: `Group '${group_name}' not found` });
+        }
+        await target.sendMessage(message);
+        console.log(`[wa-bot] 📤 Sent to '${target.name}': ${message.substring(0, 60)}...`);
+        return res.json({ success: true, group: target.name });
+    } catch (e) {
+        console.error('[wa-bot] Send error:', e);
+        return res.status(500).json({ error: e.message });
+    }
+});
+
 app.listen(3001, () => {
     console.log('[wa-bot] 🌐 API server listening on port 3001');
 });

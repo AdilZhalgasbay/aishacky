@@ -1,4 +1,4 @@
-"""Helpers for Telegram notifications across attendance, tasks, incidents, and substitutions."""
+"""Notifications via WhatsApp (wa-bot). Telegram removed."""
 
 from __future__ import annotations
 
@@ -6,9 +6,11 @@ import os
 from datetime import datetime
 from typing import Any
 
-from api.telegram import send_message
+import httpx
+
 from app import state_store
 
+WA_BOT_URL = "http://127.0.0.1:3001"
 
 PRIORITY_LABEL = {
     "urgent": "Срочно",
@@ -18,55 +20,32 @@ PRIORITY_LABEL = {
 }
 
 
-def _coerce_chat_id(value: Any) -> int | None:
-    if value in (None, "", 0):
-        return None
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
+def _wa_group() -> str:
+    return os.getenv("WA_GROUP_NAME", "Aqbobek Teachers")
 
 
-def _send_telegram(chat_id: int | None, text: str) -> bool:
-    if not chat_id:
-        print("[Notifications] _send_telegram skip: no chat_id")
+def send_whatsapp(text: str) -> bool:
+    """Send a message to the configured WhatsApp teachers group."""
+    group = _wa_group()
+    if not group:
         return False
     try:
-        from api.telegram import send_message
-        print(f"[Notifications] TO {chat_id}: {text[:60]}...")
-        send_message(chat_id, text)
-        return True
+        response = httpx.post(
+            f"{WA_BOT_URL}/send",
+            json={"group_name": group, "message": text},
+            timeout=15,
+        )
+        if response.status_code == 200:
+            print(f"[WA] ✅ Sent to '{group}': {text[:60]}")
+            return True
+        print(f"[WA] ⚠️ wa-bot {response.status_code}: {response.text[:100]}")
+        return False
     except Exception as exc:
-        print(f"[Notifications] ERROR sending to {chat_id}: {exc}")
+        print(f"[WA] ❌ Error: {exc}")
         return False
-
-
-def _employee_chat_id(employee: dict[str, Any] | None) -> int | None:
-    if not employee:
-        return None
-
-    direct_chat_id = _coerce_chat_id(employee.get("tg_chat_id"))
-    if direct_chat_id is not None:
-        return direct_chat_id
-
-    role_to_env = {
-        "director": "DIRECTOR_TG_CHAT_ID",
-        "canteen_manager": "CANTEEN_TG_CHAT_ID",
-        "zavhoz": "ZAVHOZ_TG_CHAT_ID",
-        "secretary": "SECRETARY_TG_CHAT_ID",
-        "nurse": "NURSE_TG_CHAT_ID",
-        "it_specialist": "IT_TG_CHAT_ID",
-        "security": "SECURITY_TG_CHAT_ID",
-    }
-    env_name = role_to_env.get(employee.get("role"))
-    if env_name:
-        return _coerce_chat_id(os.getenv(env_name))
-    return None
 
 
 def notify_task_assignee(task: dict[str, Any]) -> dict[str, Any]:
-    employee = state_store.find_employee_by_name(task.get("assigned_to_name"))
-    chat_id = _employee_chat_id(employee)
     due_date = task.get("due_date") or "без срока"
     priority = PRIORITY_LABEL.get(task.get("priority"), task.get("priority") or "Средний")
     text = (
@@ -76,21 +55,18 @@ def notify_task_assignee(task: dict[str, Any]) -> dict[str, Any]:
         f"⏰ Срок: {due_date}\n"
         f"⚡ Приоритет: {priority}"
     )
-
     if task.get("description") and task.get("description") != task.get("title"):
         text += f"\n\n{task['description']}"
 
-    sent = _send_telegram(chat_id, text)
+    sent = send_whatsapp(text)
     return {
         "notified": sent,
-        "notification_status": "sent" if sent else ("no_chat_id" if chat_id is None else "failed"),
-        "notification_channels": ["telegram"] if sent else [],
+        "notification_status": "sent" if sent else "failed",
+        "notification_channels": ["whatsapp"] if sent else [],
     }
 
 
 def notify_incident_assignee(incident: dict[str, Any]) -> dict[str, Any]:
-    employee = state_store.find_employee_by_name(incident.get("assigned_to_name"))
-    chat_id = _employee_chat_id(employee)
     priority = PRIORITY_LABEL.get(incident.get("priority"), incident.get("priority") or "Средний")
     text = (
         "🚨 *Новый инцидент*\n"
@@ -98,45 +74,28 @@ def notify_incident_assignee(incident: dict[str, Any]) -> dict[str, Any]:
         f"🔧 Описание: {incident.get('description') or '—'}\n"
         f"⚡ Приоритет: {priority}"
     )
-
-    sent = _send_telegram(chat_id, text)
+    sent = send_whatsapp(text)
     return {
         "notified": sent,
-        "notification_status": "sent" if sent else ("no_chat_id" if chat_id is None else "failed"),
+        "notification_status": "sent" if sent else "failed",
     }
 
 
 def notify_substitution_assignee(substitution: dict[str, Any], target_chat_id: int | None = None) -> dict[str, Any]:
-    employee = state_store.find_employee_by_name(substitution.get("substitute_name"))
-    
-    # Приоритизируем target_chat_id (общий чат), если он передан
-    chat_id = target_chat_id or _employee_chat_id(employee)
-    
-    tag = ""
-    if employee:
-        # Если есть telegram_id (например @username или chat_id), используем его для тега
-        tg_id = employee.get("telegram_id")
-        if tg_id:
-            if not str(tg_id).startswith("@"):
-                tag = f"@{tg_id} "
-            else:
-                tag = f"{tg_id} "
-        else:
-            # Fallback на имя если нет юзернейма
-            tag = f"*{employee.get('name')}*, "
-
-    print(f"[Notifications] Substitution: class={substitution.get('class_name')}, sub={substitution.get('substitute_name')}, chat={chat_id}")
+    """Send substitution notice to the WhatsApp group (target_chat_id ignored, kept for compat)."""
+    substitute = substitution.get("substitute_name") or "..."
     text = (
-        f"📚 *{substitution.get('class_name') or 'Класс'}*, "
-        f"каб. {substitution.get('room') or '—'}, "
-        f"{substitution.get('subject') or '—'} — "
-        f"заменяет *{substitution.get('substitute_name') or '...'}*"
+        f"🔄 *Замена учителя*\n"
+        f"📚 Класс: *{substitution.get('class_name') or '—'}*\n"
+        f"📖 Предмет: {substitution.get('subject') or '—'}\n"
+        f"🏫 Кабинет: {substitution.get('room') or '—'}\n"
+        f"👤 Отсутствует: {substitution.get('original_teacher_name') or '—'}\n"
+        f"✅ Заменяет: *{substitute}*"
     )
-
-    sent = _send_telegram(chat_id or _coerce_chat_id(os.getenv("DIRECTOR_TG_CHAT_ID")), text)
+    sent = send_whatsapp(text)
     return {
         "notified": sent,
-        "notification_status": "sent" if sent else ("no_chat_id" if chat_id is None else "failed"),
+        "notification_status": "sent" if sent else "failed",
     }
 
 
@@ -148,11 +107,7 @@ def send_attendance_digest(
 ) -> dict[str, Any]:
     rows = state_store.list_attendance_logs(target_date)
     if not rows:
-        return {
-            "success": False,
-            "reason": "no_attendance_rows",
-            "date": target_date,
-        }
+        return {"success": False, "reason": "no_attendance_rows", "date": target_date}
 
     already_sent = rows and all(row.get("sent_to_canteen") for row in rows)
     if already_sent and not force:
@@ -164,18 +119,20 @@ def send_attendance_digest(
             "total_absent": sum(row["absent_count"] for row in rows),
         }
 
-    notified_channels: list[str] = []
-    canteen_sent = _send_telegram(canteen_chat_id, canteen_text)
-    if canteen_sent:
-        notified_channels.append("canteen_telegram")
-    
-    if _send_telegram(director_chat_id, "\n".join(director_lines)):
-        notified_channels.append("director_telegram")
+    total_portions = sum(row["present_count"] for row in rows)
+    total_absent = sum(row["absent_count"] for row in rows)
 
-    # Only mark as sent if at least the canteen notification went through
-    # This ensures it will be retried if the primary delivery fails
+    lines = [
+        f"🍽️ *Посещаемость {target_date}*",
+        f"✅ Порций в столовую: *{total_portions}*",
+        f"❌ Отсутствуют: *{total_absent}*",
+    ]
+    for row in rows[:10]:
+        lines.append(f"  • {row['class_name']}: {row['present_count']} / {row['present_count'] + row['absent_count']}")
+
+    sent = send_whatsapp("\n".join(lines))
     updated = False
-    if canteen_sent or force:
+    if sent or force:
         updated = state_store.mark_attendance_sent(target_date)
 
     return {
@@ -184,6 +141,6 @@ def send_attendance_digest(
         "updated": updated,
         "total_portions": total_portions,
         "total_absent": total_absent,
-        "notified_channels": notified_channels,
+        "notified_channels": ["whatsapp"] if sent else [],
         "sent_at": datetime.now().isoformat(),
     }

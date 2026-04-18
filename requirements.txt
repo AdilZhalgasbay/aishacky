@@ -10,3 +10,4 @@ python-dotenv
 playwright
 apscheduler
 httpx
+pytest

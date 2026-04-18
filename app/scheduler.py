@@ -197,20 +197,6 @@ async def collect_wa_attendance():
             f"отсутствуют: {result.get('total_absent', '?')}"
         )
 
-        director_chat_id = get_director_chat_id()
-        if director_chat_id:
-            from api.telegram import send_message
-
-            classes = result.get("classes", [])
-            lines = [
-                f"📊 *Посещаемость {timezone_today.strftime('%d.%m.%Y')}*",
-                f"✅ Всего порций: *{result.get('total_portions', '?')}*",
-                f"❌ Отсутствуют: *{result.get('total_absent', '?')}*",
-            ]
-            for school_class in classes[:7]:
-                total = school_class["present"] + school_class["absent"]
-                lines.append(f"  • {school_class['class']}: {school_class['present']} / {total}")
-            send_message(int(director_chat_id), "\n".join(lines))
 
     except Exception as exc:
         print(f"  ❌ Ошибка сбора посещаемости: {exc}")
@@ -254,12 +240,6 @@ async def collect_wa_incidents():
             else:
                 print(f"  ✅ Решено: {result.get('incident', {}).get('description', '—')} ({message['sender']})")
 
-            director_chat_id = get_director_chat_id()
-            if director_chat_id:
-                from api.telegram import send_message
-                summary = format_result(result, message["sender"])
-                if summary:
-                    send_message(int(director_chat_id), summary)
 
         if updated:
             _save_incident_fingerprints(seen_fingerprints)

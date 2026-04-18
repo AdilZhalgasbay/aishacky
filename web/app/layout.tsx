@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import Sidebar from '@/components/layout/Sidebar'
+import DirectorAgentWidget from '@/components/DirectorAgentWidget'
 
 export const metadata: Metadata = {
   title: 'Aqbobek AI Director | AI School Management Dashboard',
@@ -25,6 +25,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <DirectorAgentWidget />
       </body>
     </html>
   )

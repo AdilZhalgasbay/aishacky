@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import attendance, incidents, voice, schedule, rag, webhooks, data
+from app.routers import attendance, incidents, voice, schedule, rag, webhooks, data, agent
 from app import rag_store, state_store
 
 
@@ -85,6 +85,7 @@ app.include_router(schedule.router)
 app.include_router(rag.router)
 app.include_router(webhooks.router)
 app.include_router(data.router)
+app.include_router(agent.router)
 
 
 @app.get("/", tags=["health"])
@@ -107,6 +108,9 @@ async def root():
             "GET  /tasks",
             "GET  /schedule/substitutions",
             "GET  /telegram/messages",
+            "POST /agent/message",
+            "POST /agent/message-audio",
+            "GET  /agent/history",
         ]
     }
 

@@ -6,3 +6,5 @@ __pycache__
 .DS_Store
 wa_session
 test_*.py
+scratch/*.log
+scratch/test-summary-*.txt
