@@ -1,58 +1,58 @@
-# Aqbobek AI - School Management Platform
+# Aqbobek AI - Платформа управления школой
 
-Aqbobek AI is an intelligent administration platform developed for the AIS Hack 3.0 hackathon (EdTech & AI Management track). The system automates routine bureaucratic tasks, attendance tracking, schedule substitutions, and maintenance requests using Natural Language Processing (NLP) and Large Language Models (LLMs).
+Aqbobek AI — это интеллектуальная платформа администрирования, разработанная для хакатона AIS Hack 3.0 (трек EdTech & AI Management). Система автоматизирует рутинные бюрократические задачи, учет посещаемости, замену расписания и технические заявки с использованием обработки естественного языка (NLP) и больших языковых моделей (LLM).
 
-## Core Features
+## Основной функционал
 
-- NLP Attendance Parser: Automatically processes teacher attendance reports from chat messages, aggregates the data, and dispatches summaries to the school administration and canteen.
-- Smart Substitution: Reassigns classes when a teacher is absent by checking the schedule for available teachers matching the required subject and time, while preventing schedule and room conflicts.
-- Voice-to-Task: Allows the principal to dictate tasks. The system uses multimodal LLMs to parse audio, identify assignees, set deadlines, and automatically manage the task lifecycle.
-- Bureaucratic RAG: Provides answers based on official regulations (e.g., educational load limits, sanitary guidelines) while strictly checking schedules and tasks for compliance.
+- NLP-парсер посещаемости: Автоматически обрабатывает отчеты о посещаемости учителей из сообщений в чате, агрегирует данные и отправляет сводки администрации школы и в столовую.
+- Умные замены (Smart Substitution): Переназначает классы при отсутствии учителя, проверяя расписание на наличие свободных учителей подходящего профиля (предмет, время), предотвращая конфликты в расписании и кабинетах.
+- Голосовые задачи (Voice-to-Task): Позволяет директору диктовать задачи голосом. Система использует мультимодальные LLM для разбора аудио, определения исполнителей, установки сроков и автоматического управления жизненным циклом задач.
+- Бюрократический RAG: Предоставляет ответы на основе официальных нормативных документов (например, нормативы учебной нагрузки, санитарные правила), а также строго проверяет расписание и задачи на соответствие регламентам.
 
-## Technology Stack
+## Стек технологий
 
 - Frontend: Next.js 16 (App Router), React, TypeScript, Tailwind CSS
 - Backend: Python, FastAPI
-- Database: Supabase (PostgreSQL)
-- AI Integration: NVIDIA NIM (Llama 3.3-70b, Gemma 3n), FAISS Vector Database
+- База данных: Supabase (PostgreSQL)
+- Интеграция ИИ: NVIDIA NIM (Llama 3.3-70b, Gemma 3n), FAISS Vector Database
 
-## Architecture Overview
+## Обзор архитектуры
 
-The system operates via a unified web dashboard and an integrated AI bot simulator. Teachers can interact with the system using natural language (text or voice) via chat. The FastAPI backend processes these inputs using LLMs hooked up to the school internal dataset stored in Supabase, and populates the dashboard for the principal.
+Система функционирует через единую веб-панель (дашборд) и интегрированный симулятор ИИ-бота. Учителя могут взаимодействовать с системой с помощью естественного языка (текст или голос) через чат. Бэкенд на FastAPI обрабатывает эти входящие данные с использованием LLM, привязанных к внутреннему набору данных школы, хранящемуся в Supabase, и заполняет дашборд для директора.
 
-## Setup and Installation
+## Установка и запуск
 
-### Dependencies & Prerequisites
+### Зависимости и требования
 
 - Python 3.10+
 - Node.js 18+
-- Supabase project
-- NVIDIA NIM API Key
+- Проект Supabase
+- API ключ NVIDIA NIM
 
-### Backend Setup (Python)
+### Запуск бэкенда (Python)
 
-1. Navigate to the root directory.
-2. Create and activate a virtual environment:
+1. Перейдите в корневой каталог.
+2. Создайте и активируйте виртуальное окружение:
    python -m venv .venv
-   source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
-3. Install dependencies:
+   source .venv/bin/activate  # Для Windows: .venv\Scripts\activate
+3. Установите зависимости:
    pip install -r requirements.txt
-4. Set up environment variables by copying `.env.example` to `.env` and adding your credentials.
-5. Run the ASGI server:
+4. Настройте переменные среды, скопировав `.env.example` в `.env` и добавив свои данные.
+5. Запустите ASGI сервер:
    uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-### Frontend Setup (Next.js)
+### Запуск фронтенда (Next.js)
 
-1. Navigate to the `web` directory.
-2. Install dependencies:
+1. Перейдите в каталог `web`.
+2. Установите зависимости:
    npm install
-3. Configure environment variables in `web/.env.local` if required.
-4. Run the development server:
+3. При необходимости настройте переменные среды в `web/.env.local`.
+4. Запустите сервер для разработки:
    npm run dev
-5. To create an optimized production build, run:
+5. Для создания оптимизированной production-сборки выполните:
    npm run build
    npm start
 
-## License
+## Лицензия
 
-Proprietary. Developed for the AIS Hack 3.0 Hackathon.
+Проприетарная. Разработано для хакатона AIS Hack 3.0.
