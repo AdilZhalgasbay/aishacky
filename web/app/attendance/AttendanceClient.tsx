@@ -83,8 +83,15 @@ export default function AttendanceClient({ attendance, classes }: Props) {
   async function handleSendToCanteen() {
     setLoading(true)
     try {
-      await fetch('/api/attendance', { method: 'PATCH' })
-      showToast(`Данные столовой обновлены: ${totalPresent} порций`, 'success')
+      const res = await fetch('/api/attendance', { method: 'PATCH' })
+      const data = await res.json()
+      if (data.success) {
+        showToast(`Данные столовой отправлены: ${data.total_portions} порций`, 'success')
+      } else if (data.reason === 'already_sent') {
+        showToast(`Сводка уже была отправлена ранее`, 'info')
+      } else {
+        showToast('Не удалось отправить сводку', 'error')
+      }
       router.refresh()
     } catch {
       showToast('Ошибка при отправке', 'error')

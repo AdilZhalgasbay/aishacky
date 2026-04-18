@@ -21,7 +21,9 @@ const ROLE_LABEL: Record<string, string> = {
   zavhoz: 'Завхоз',
   secretary: 'Секретарь',
   methodist: 'Методист',
+  it_specialist: 'IT-специалист',
   nurse: 'Медсестра',
+  security: 'Охрана',
   canteen_manager: 'Заведующий столовой',
 }
 
@@ -30,7 +32,9 @@ const ROLE_COLOR: Record<string, { bg: string; color: string }> = {
   teacher: { bg: '#dcfce7', color: '#15803D' },
   zavhoz: { bg: '#fef3c7', color: '#D97706' },
   methodist: { bg: '#ede9fe', color: '#7C3AED' },
+  it_specialist: { bg: '#e0f2fe', color: '#0369a1' },
   nurse: { bg: '#fee2e2', color: '#DC2626' },
+  security: { bg: '#f3f4f6', color: '#374151' },
   secretary: { bg: '#F1F5F9', color: '#475569' },
   canteen_manager: { bg: '#fef3c7', color: '#D97706' },
 }
@@ -42,7 +46,7 @@ export default function EmployeesClient({ employees }: Props) {
     grouped[emp.role].push(emp)
   }
 
-  const roleOrder = ['director', 'methodist', 'teacher', 'zavhoz', 'secretary', 'nurse', 'canteen_manager']
+  const roleOrder = ['director', 'methodist', 'teacher', 'zavhoz', 'it_specialist', 'secretary', 'nurse', 'security', 'canteen_manager']
 
   return (
     <div className="animate-fadein">

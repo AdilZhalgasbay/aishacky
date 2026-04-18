@@ -10,9 +10,12 @@ interface Substitution {
   date: string
   period: number | null
   subject: string | null
+  room?: string | null
+  time?: string | null
   reason: string | null
   status: string
   notified: boolean
+  notification_status?: string
 }
 
 interface Employee {
@@ -47,6 +50,8 @@ interface ScheduleResult {
   absent_teacher: string
   substitute_options?: SubstituteOption[]
   substitutions_created: number
+  substitutions?: Substitution[]
+  conflict_free?: boolean
   error?: string
 }
 
@@ -61,6 +66,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
   const [absentTeacher, setAbsentTeacher] = useState('')
   const [reason, setReason] = useState('Болезнь')
   const [className, setClassName] = useState('')
+  const [commandText, setCommandText] = useState('')
   const [result, setResult] = useState<ScheduleResult | null>(null)
   const [tab, setTab] = useState<'today' | 'find' | 'teachers'>('today')
 
@@ -89,9 +95,39 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
         }),
       })
       const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || data.error || 'Не удалось назначить замену')
       if (data.error) throw new Error(data.error)
       setResult(data)
       showToast(`Замена назначена: ${data.substitutions_created} уроков`, 'success')
+      router.refresh()
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error), 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function runNaturalLanguageSubstitute() {
+    if (!commandText.trim()) return showToast('Введите текстовую команду директора', 'error')
+    setLoading(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/schedule/substitute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: commandText,
+          reason,
+          class_name: className,
+          date: new Date().toISOString().split('T')[0],
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || data.error || 'Не удалось разобрать команду')
+      setResult(data)
+      setAbsentTeacher(data.absent_teacher || '')
+      setCommandText('')
+      showToast(`Команда обработана: ${data.substitutions_created} уроков`, 'success')
       router.refresh()
     } catch (error: unknown) {
       showToast(getErrorMessage(error), 'error')
@@ -140,6 +176,25 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
         ))}
       </div>
 
+      <div className="card" style={{ marginBottom: 20, borderLeft: '4px solid var(--cta)' }}>
+        <h2 className="section-title" style={{ marginBottom: 8 }}>Команда директором в свободной форме</h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 0 }}>
+          Например: «Учитель математики Аскар заболел, его сегодня не будет».
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'end' }}>
+          <textarea
+            className="form-input form-textarea"
+            style={{ minHeight: 84 }}
+            value={commandText}
+            onChange={(e) => setCommandText(e.target.value)}
+            placeholder="Введите текстовую команду для автоматической замены..."
+          />
+          <button onClick={runNaturalLanguageSubstitute} className="btn btn-cta" disabled={loading || !commandText.trim()}>
+            {loading ? <span className="spinner" /> : 'Разобрать команду'}
+          </button>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
         {(['today', 'find', 'teachers'] as const).map(t => (
@@ -173,6 +228,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
                   <th>Урок</th>
                   <th>Класс</th>
                   <th>Предмет</th>
+                  <th>Кабинет</th>
                   <th>Отсутствует</th>
                   <th>Замещает</th>
                   <th>Причина</th>
@@ -186,8 +242,11 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
                     <td style={{ fontWeight: 700 }}>{sub.period}</td>
                     <td style={{ fontWeight: 700 }}>{sub.class_name || '—'}</td>
                     <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{sub.subject || '—'}</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.room || '—'}</td>
                     <td style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>{sub.original_teacher_name || '—'}</td>
-                    <td style={{ fontSize: 13, color: '#16A34A', fontWeight: 600 }}>{sub.substitute_name || '—'}</td>
+                    <td style={{ fontSize: 13, color: sub.substitute_name ? '#16A34A' : '#D97706', fontWeight: 600 }}>
+                      {sub.substitute_name || 'Нет свободного учителя'}
+                    </td>
                     <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub.reason || '—'}</td>
                     <td>
                       <span style={{ background: `${STATUS_COLOR[sub.status]}22`, color: STATUS_COLOR[sub.status] || '#94A3B8', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
@@ -286,7 +345,26 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
                   <div style={{ fontSize: 12, color: '#1d4ed8', fontWeight: 700 }}>
                     Создано замен: {result.substitutions_created} уроков
                   </div>
+                  <div style={{ fontSize: 12, color: '#1d4ed8', marginTop: 4 }}>
+                    Проверка конфликтов: {result.conflict_free ? 'конфликтов не найдено' : 'требуется ручная проверка'}
+                  </div>
                 </div>
+                {result.substitutions?.length ? (
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {result.substitutions.map((sub) => (
+                      <div key={sub.id} style={{ padding: '9px 12px', background: 'var(--bg)', borderRadius: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>
+                          Урок {sub.period} • {sub.class_name || 'класс не указан'} • {sub.subject || '—'}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {sub.substitute_name
+                            ? `${sub.substitute_name} • уведомление: ${sub.notification_status === 'sent' ? 'отправлено' : sub.notification_status === 'no_chat_id' ? 'нет chat_id' : 'ожидает'}`
+                            : 'Свободный учитель не найден автоматически'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             )}
           </div>

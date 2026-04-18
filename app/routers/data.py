@@ -9,6 +9,11 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app import state_store
+from app.notifications import (
+    notify_incident_assignee,
+    notify_task_assignee,
+    send_attendance_digest,
+)
 from app.message_router import auto_route_message, extract_log_payload, format_result
 
 router = APIRouter(tags=["dashboard"])
@@ -102,26 +107,8 @@ async def create_attendance(payload: AttendanceUpdateRequest):
 @router.patch("/attendance")
 def mark_attendance_sent(target_date: str | None = Query(default=None, alias="date")):
     effective_date = target_date or date.today().isoformat()
-    updated = state_store.mark_attendance_sent(effective_date)
-
-    # Уведомляем заведующую столовой в Telegram
-    canteen_chat_id = os.getenv("CANTEEN_TG_CHAT_ID", "")
-    if canteen_chat_id and updated > 0:
-        try:
-            rows = state_store.list_attendance_logs(effective_date)
-            total_portions = sum(r["present_count"] for r in rows)
-            total_absent = sum(r["absent_count"] for r in rows)
-            from api.telegram import send_message
-            send_message(
-                int(canteen_chat_id),
-                f"🍽️ *Порций на {effective_date}: {total_portions}*\n"
-                f"❌ Отсутствуют: {total_absent}\n"
-                f"✅ Данные подтверждены директором",
-            )
-        except Exception as exc:
-            print(f"[canteen notify] {exc}")
-
-    return {"success": True, "updated": updated, "date": effective_date, "notified_canteen": bool(canteen_chat_id)}
+    result = send_attendance_digest(effective_date, source="dashboard", force=True)
+    return result
 
 
 @router.get("/incidents")
@@ -132,6 +119,15 @@ async def get_incidents(status: str | None = None):
 @router.post("/incidents")
 async def create_incident(payload: IncidentCreateRequest):
     incident = state_store.create_incident(payload.model_dump())
+    if incident.get("assigned_to_name"):
+        notify_result = notify_incident_assignee(incident)
+        incident = state_store.update_incident(
+            incident["id"],
+            {
+                "notified": notify_result["notified"],
+                "notification_status": notify_result["notification_status"],
+            },
+        ) or incident
     return {"incident": incident}
 
 
@@ -158,6 +154,16 @@ async def get_tasks(status: str | None = None):
 @router.post("/tasks")
 async def create_task(payload: TaskCreateRequest):
     task = state_store.create_task(payload.model_dump())
+    if task.get("assigned_to_name"):
+        notify_result = notify_task_assignee(task)
+        task = state_store.update_task(
+            task["id"],
+            {
+                "notified": notify_result["notified"],
+                "notification_status": notify_result["notification_status"],
+                "notification_channels": notify_result["notification_channels"],
+            },
+        ) or task
     return {"task": task}
 
 
@@ -257,4 +263,3 @@ def simulate_telegram_audio(sender_name: str = Form(...), file: UploadFile = Fil
     # Добавляем в ответ распознанный текст, чтобы показать его в UI
     response_data["transcribed_text"] = transcribed_text
     return response_data
-

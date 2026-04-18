@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import attendance, incidents, voice, schedule, rag, webhooks, data
-from app import rag_store
+from app import rag_store, state_store
 
 
 @asynccontextmanager
@@ -28,11 +28,22 @@ async def lifespan(app: FastAPI):
     print("[START] Запуск Aqbobek AI API...")
     scheduler_started = False
     try:
+        state_store.bootstrap_supabase_state()
+    except Exception as e:
+        print(f"[WARN]  Supabase bootstrap не выполнен: {e}")
+    try:
         rag_store.build_index()
     except Exception as e:
         print(f"[WARN]  RAG индекс не загружен: {e}")
 
-    if os.getenv("WA_SCHEDULER_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}:
+    if any(
+        os.getenv(flag, "false").strip().lower() in {"1", "true", "yes", "on"}
+        for flag in (
+            "WA_SCHEDULER_ENABLED",
+            "TELEGRAM_SCHEDULER_ENABLED",
+            "AUTOMATION_SCHEDULER_ENABLED",
+        )
+    ):
         try:
             from app.scheduler import start_scheduler
 

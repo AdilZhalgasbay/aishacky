@@ -1,9 +1,13 @@
+import os
 import sys, requests, json
+from dotenv import load_dotenv
 sys.stdout.reconfigure(encoding='utf-8')
 
-TOKEN = 'sbp_9f5df5a5da0af2f9551ae2bb078f10bed0d2154f'
-PROJECT = 'tutzawhhpklqodjagtha'
-SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1dHphd2hocGtscW9kamFndGhhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjQzNDMyNSwiZXhwIjoyMDkyMDEwMzI1fQ.jcHpPsu6s1h-lzycNYZ8oAheCE2kLVBer1KSbkN7J0o'
+load_dotenv()
+
+TOKEN = os.getenv('SUPABASE_MANAGEMENT_TOKEN', '')
+PROJECT = os.getenv('SUPABASE_PROJECT_ID', '')
+SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY', '')
 
 # Query information_schema directly via PostgREST
 BASE = f'https://{PROJECT}.supabase.co'

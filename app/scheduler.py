@@ -5,6 +5,9 @@ app/scheduler.py
   - 09:00 читает сообщения из группы и отправляет в /messages/parse-attendance
   - каждые 30 минут проверяет новые инциденты через /messages/parse-incident
 
+Также поддерживает Telegram-first режим для MVP:
+  - 09:00 отправляет накопленную сводку посещаемости директору и в столовую
+
 Можно использовать как standalone:
   python3 app/scheduler.py
 
@@ -43,6 +46,13 @@ def _env_flag(name: str, default: bool = False) -> bool:
 
 def is_scheduler_enabled() -> bool:
     return _env_flag("WA_SCHEDULER_ENABLED", default=False)
+
+
+def is_telegram_scheduler_enabled() -> bool:
+    return _env_flag("TELEGRAM_SCHEDULER_ENABLED", default=False) or _env_flag(
+        "AUTOMATION_SCHEDULER_ENABLED",
+        default=False,
+    )
 
 
 def get_api_base() -> str:
@@ -258,17 +268,50 @@ async def collect_wa_incidents():
         print(f"  ❌ Ошибка проверки инцидентов: {exc}")
 
 
+async def send_telegram_attendance_digest():
+    """09:00 отправляет Telegram-сводку по уже накопленным attendance-логам."""
+    timezone_today = _today_in_timezone().isoformat()
+    print(f"[{datetime.now().strftime('%H:%M')}] 📊 Telegram attendance digest...")
+
+    try:
+        from app.notifications import send_attendance_digest
+
+        result = send_attendance_digest(
+            timezone_today,
+            source="telegram-auto-09:00",
+            force=False,
+        )
+        if result.get("success"):
+            print(
+                f"  ✅ Telegram digest: порций={result.get('total_portions')}, "
+                f"отсутствуют={result.get('total_absent')}"
+            )
+        else:
+            print(f"  ℹ️ Telegram digest skipped: {result.get('reason')}")
+    except Exception as exc:
+        print(f"  ❌ Ошибка Telegram digest: {exc}")
+
+
 def create_scheduler() -> AsyncIOScheduler:
     timezone = get_timezone()
     scheduler = AsyncIOScheduler(timezone=timezone)
-    scheduler.add_job(collect_wa_attendance, "cron", hour=9, minute=0, id="wa_attendance")
-    scheduler.add_job(
-        collect_wa_incidents,
-        "cron",
-        hour="8-17",
-        minute="0,30",
-        id="wa_incidents",
-    )
+    if is_scheduler_enabled():
+        scheduler.add_job(collect_wa_attendance, "cron", hour=9, minute=0, id="wa_attendance")
+        scheduler.add_job(
+            collect_wa_incidents,
+            "cron",
+            hour="8-17",
+            minute="0,30",
+            id="wa_incidents",
+        )
+    if is_telegram_scheduler_enabled():
+        scheduler.add_job(
+            send_telegram_attendance_digest,
+            "cron",
+            hour=9,
+            minute=0,
+            id="telegram_attendance_digest",
+        )
     return scheduler
 
 
@@ -283,12 +326,15 @@ def start_scheduler() -> AsyncIOScheduler:
     _scheduler.start()
 
     timezone = get_timezone()
-    print("✅ WhatsApp планировщик запущен")
+    print("✅ Автоматизации запущены")
     print(f"  🧭 Часовой пояс: {timezone.key}")
-    print(f"  💬 Группа: {get_group_name()}")
-    print(f"  🪟 Режим браузера: {'headless' if use_headless_browser() else 'visible'}")
-    print("  ⏰ 09:00 — посещаемость WhatsApp → /parse-attendance")
-    print("  🔄 каждые 30 мин — инциденты WhatsApp → /parse-incident")
+    if is_scheduler_enabled():
+        print(f"  💬 WhatsApp группа: {get_group_name()}")
+        print(f"  🪟 Режим браузера: {'headless' if use_headless_browser() else 'visible'}")
+        print("  ⏰ 09:00 — посещаемость WhatsApp → /parse-attendance")
+        print("  🔄 каждые 30 мин — инциденты WhatsApp → /parse-incident")
+    if is_telegram_scheduler_enabled():
+        print("  ⏰ 09:00 — Telegram attendance logs → директор + столовая")
     return _scheduler
 
 
@@ -301,7 +347,7 @@ def stop_scheduler():
 
     _scheduler.shutdown(wait=False)
     _scheduler = None
-    print("🛑 WhatsApp планировщик остановлен.")
+    print("🛑 Автоматизации остановлены.")
 
 
 async def main():

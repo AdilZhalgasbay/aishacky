@@ -12,14 +12,18 @@ parse_schedule.py
 
 Заголовки классов — в строке 1: 7A, 7B, 7C, 8A, 8B, 8C, 8D, 9A, 9B, 10A, 10B, 11A, 11B
 """
+import os
 import sys, re
 sys.stdout.reconfigure(encoding='utf-8')
 
 import openpyxl
+from dotenv import load_dotenv
 from supabase import create_client
 
-SUPABASE_URL = "https://tutzawhhpklqodjagtha.supabase.co"
-SERVICE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1dHphd2hocGtscW9kamFndGhhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjQzNDMyNSwiZXhwIjoyMDkyMDEwMzI1fQ.jcHpPsu6s1h-lzycNYZ8oAheCE2kLVBer1KSbkN7J0o"
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SERVICE_KEY  = os.getenv("SUPABASE_SERVICE_KEY", "")
 
 sb = create_client(SUPABASE_URL, SERVICE_KEY)
 

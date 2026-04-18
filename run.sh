@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 
 source .venv/bin/activate
 
-TOKEN="8666227278:AAHEOFAhG6GB9fqQxItIT3yfRbuzzuOOytU"
+TOKEN="${TELEGRAM_TOKEN:-}"
 WEB_PID=""
 
 ensure_port_free() {
@@ -21,6 +21,11 @@ ensure_port_free() {
 
 ensure_port_free 3000
 ensure_port_free 8000
+
+if [ -z "$TOKEN" ]; then
+  echo "❌ TELEGRAM_TOKEN не задан. Укажи его в .env или окружении."
+  exit 1
+fi
 
 echo "🖥️ Запуск Next.js dashboard..."
 cd web

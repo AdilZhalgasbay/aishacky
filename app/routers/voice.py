@@ -3,6 +3,7 @@ from fastapi import APIRouter, UploadFile, File
 from pydantic import BaseModel
 from api.voice import parse_tasks_from_text, parse_tasks_from_audio
 from app import state_store
+from app.notifications import notify_task_assignee
 from app.routers import rag
 
 router = APIRouter(prefix="/voice", tags=["voice"])
@@ -10,27 +11,44 @@ router = APIRouter(prefix="/voice", tags=["voice"])
 class VoiceTextRequest(BaseModel):
     text: str
 
+
+def _create_tasks_with_notifications(tasks: list[dict]) -> list[dict]:
+    created = []
+    for task in tasks:
+        compliance = rag.check_compliance(
+            f"Задача: {task.get('description')} для {task.get('assignee')}"
+        )
+        created_task = state_store.create_task(
+            {
+                "title": task.get("description") or "Голосовая задача",
+                "description": task.get("description"),
+                "assigned_to_name": task.get("assignee"),
+                "due_date": task.get("deadline"),
+                "priority": task.get("priority") or "medium",
+                "source": "voice",
+                "compliance": compliance,
+            }
+        )
+
+        if created_task.get("assigned_to_name"):
+            notify_result = notify_task_assignee(created_task)
+            created_task = state_store.update_task(
+                created_task["id"],
+                {
+                    "notified": notify_result["notified"],
+                    "notification_status": notify_result["notification_status"],
+                    "notification_channels": notify_result["notification_channels"],
+                },
+            ) or created_task
+
+        created.append(created_task)
+    return created
+
 @router.post("/parse-tasks")
 def parse_tasks_text(req: VoiceTextRequest):
     """Парсинг текстовой команды директора в задачи."""
     tasks = parse_tasks_from_text(req.text)
-    created = []
-    for task in tasks:
-        # RAG Compliance Check
-        compliance = rag.check_compliance(f"Задача: {task.get('description')} для {task.get('assignee')}")
-        created.append(
-            state_store.create_task(
-                {
-                    "title": task.get("description") or "Голосовая задача",
-                    "description": task.get("description"),
-                    "assigned_to_name": task.get("assignee"),
-                    "due_date": task.get("deadline"),
-                    "priority": task.get("priority") or "medium",
-                    "source": "voice",
-                    "compliance": compliance,
-                }
-            )
-        )
+    created = _create_tasks_with_notifications(tasks)
     return {"tasks": created, "count": len(created)}
 
 @router.post("/parse-tasks-audio")
@@ -39,21 +57,5 @@ def parse_tasks_audio(file: UploadFile = File(...)):
     audio_bytes = file.file.read()
     mime = file.content_type or "audio/wav"
     tasks = parse_tasks_from_audio(audio_bytes, mime_type=mime)
-    created = []
-    for task in tasks:
-        # RAG Compliance Check
-        compliance = rag.check_compliance(f"Задача: {task.get('description')} для {task.get('assignee')}")
-        created.append(
-            state_store.create_task(
-                {
-                    "title": task.get("description") or "Голосовая задача",
-                    "description": task.get("description"),
-                    "assigned_to_name": task.get("assignee"),
-                    "due_date": task.get("deadline"),
-                    "priority": task.get("priority") or "medium",
-                    "source": "voice",
-                    "compliance": compliance,
-                }
-            )
-        )
+    created = _create_tasks_with_notifications(tasks)
     return {"tasks": created, "count": len(created)}

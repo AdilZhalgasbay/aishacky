@@ -90,7 +90,8 @@ export async function proxyBackend(request: Request, targetPath: string): Promis
   }
 
   if (!['GET', 'HEAD'].includes(request.method)) {
-    init.body = await request.text()
+    const bytes = await request.arrayBuffer()
+    init.body = bytes.byteLength > 0 ? bytes : undefined
   }
 
   const response = await fetch(

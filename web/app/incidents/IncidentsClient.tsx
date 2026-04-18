@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import DirectorTaskAssistant from '@/components/DirectorTaskAssistant'
 
 interface Incident {
   id: string
@@ -10,6 +11,8 @@ interface Incident {
   assigned_to_name: string | null
   status: string
   description: string
+  notified?: boolean
+  notification_status?: string
   created_at: string
 }
 
@@ -22,6 +25,8 @@ interface Task {
   priority: string
   status: string
   source: string
+  notified?: boolean
+  notification_status?: string
   created_at: string
 }
 
@@ -29,15 +34,16 @@ interface Props {
   incidents: Incident[]
   tasks: Task[]
   employees: { name: string; id: string }[]
+  initialTab?: 'incidents' | 'tasks' | 'kanban'
 }
 
 const PRIORITY_LABEL: Record<string, string> = { urgent: 'Срочно', high: 'Высокий', medium: 'Средний', low: 'Низкий' }
 const STATUS_LABEL: Record<string, string> = { open: 'Открыт', in_progress: 'В работе', resolved: 'Решён', pending: 'Ожидает', in_progress_task: 'В работе', completed: 'Завершён' }
 const TYPE_LABEL: Record<string, string> = { infrastructure: 'Инфраструктура', maintenance: 'Обслуживание', supplies: 'Расходники', medical: 'Медицина', other: 'Другое' }
 
-export default function IncidentsClient({ incidents, tasks, employees }: Props) {
+export default function IncidentsClient({ incidents, tasks, employees, initialTab = 'incidents' }: Props) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'incidents' | 'tasks' | 'kanban'>('incidents')
+  const [activeTab, setActiveTab] = useState<'incidents' | 'tasks' | 'kanban'>(initialTab)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -255,6 +261,8 @@ export default function IncidentsClient({ incidents, tasks, employees }: Props) 
         ))}
       </div>
 
+      <DirectorTaskAssistant onCreated={() => setActiveTab('tasks')} />
+
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
         {(['incidents', 'tasks', 'kanban'] as const).map(t => (
@@ -280,6 +288,7 @@ export default function IncidentsClient({ incidents, tasks, employees }: Props) 
                 <th>Тип</th>
                 <th>Место</th>
                 <th>Ответственный</th>
+                <th>Уведомление</th>
                 <th>Статус</th>
                 <th>Действия</th>
               </tr>
@@ -292,6 +301,11 @@ export default function IncidentsClient({ incidents, tasks, employees }: Props) 
                   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{TYPE_LABEL[inc.type] || inc.type}</td>
                   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{inc.location || '—'}</td>
                   <td style={{ fontSize: 13 }}>{inc.assigned_to_name || '—'}</td>
+                  <td>
+                    <span className={`badge badge-${inc.notified ? 'completed' : 'pending'}`}>
+                      {inc.notification_status === 'sent' ? 'Отправлено' : inc.notification_status === 'no_chat_id' ? 'Нет chat_id' : 'Ожидает'}
+                    </span>
+                  </td>
                   <td><span className={`badge badge-${inc.status.replace('_', '-')}`}>{STATUS_LABEL[inc.status]}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 4 }}>
@@ -321,6 +335,7 @@ export default function IncidentsClient({ incidents, tasks, employees }: Props) 
                 <th>Приоритет</th>
                 <th>Источник</th>
                 <th>Срок</th>
+                <th>Уведомление</th>
                 <th>Статус</th>
                 <th>Действия</th>
               </tr>
@@ -334,6 +349,11 @@ export default function IncidentsClient({ incidents, tasks, employees }: Props) 
                   <td><span className={`badge badge-${task.source}`}>{task.source === 'voice' ? 'Голос' : 'Вручную'}</span></td>
                   <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                     {task.due_date ? new Date(task.due_date).toLocaleDateString('ru-RU') : '—'}
+                  </td>
+                  <td>
+                    <span className={`badge badge-${task.notified ? 'completed' : 'pending'}`}>
+                      {task.notification_status === 'sent' ? 'Отправлено' : task.notification_status === 'no_chat_id' ? 'Нет chat_id' : 'Ожидает'}
+                    </span>
                   </td>
                   <td><span className={`badge badge-${task.status.replace('_', '-')}`}>{STATUS_LABEL[task.status] || task.status}</span></td>
                   <td>

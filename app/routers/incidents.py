@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from api.llm import chat_json
 from app import state_store
+from app.notifications import notify_incident_assignee
 
 router = APIRouter(prefix="/messages", tags=["incidents"])
 
@@ -64,7 +65,17 @@ def parse_incident(req: IncidentRequest):
                 "raw_message": req.message,
             }
         )
+        if incident.get("assigned_to_name"):
+            notify_result = notify_incident_assignee(incident)
+            incident = state_store.update_incident(
+                incident["id"],
+                {
+                    "notified": notify_result["notified"],
+                    "notification_status": notify_result["notification_status"],
+                },
+            ) or incident
         result["incident_id"] = incident["id"]
+        result["notified"] = incident.get("notified", False)
     return result
 
 @router.post("/parse-resolution")
