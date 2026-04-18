@@ -19,7 +19,6 @@ const nav = [
   { href: '/incidents',  label: 'Инциденты',         icon: AlertTriangle   },
   { href: '/schedule',   label: 'Расписание',        icon: CalendarDays    },
   { href: '/rag',        label: 'Приказы и RAG',     icon: BookOpen        },
-  { href: '/telegram',   label: 'Telegram бот',      icon: MessageCircle   },
   { href: '/employees',  label: 'Сотрудники',        icon: UserCircle      },
 ]
 

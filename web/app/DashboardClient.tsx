@@ -201,7 +201,6 @@ export default function DashboardClient() {
   ]
 
   const quickLinks = [
-    { label: 'Telegram бот',  icon: MessageCircle, href: '/telegram',  color: '#8B5CF6' },
     { label: 'Голос задача',  icon: Mic,           href: '/incidents',  color: '#3B82F6' },
     { label: 'Приказы RAG',   icon: BookOpen,      href: '/rag',        color: '#F59E0B' },
     { label: 'Расписание',    icon: Calendar,      href: '/schedule',   color: '#10B981' },
@@ -468,7 +467,7 @@ export default function DashboardClient() {
       )}
 
       {/* ── Quick links ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {quickLinks.map((q) => {
           const Icon = q.icon
           return (
