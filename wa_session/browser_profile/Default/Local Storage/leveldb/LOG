@@ -1,2 +1,3 @@
-2026/04/18-11:30:01.163 65bc Creating DB C:\Users\user\Desktop\ais\wa_session\browser_profile\Default\Local Storage\leveldb since it was missing.
-2026/04/18-11:30:01.187 65bc Reusing MANIFEST C:\Users\user\Desktop\ais\wa_session\browser_profile\Default\Local Storage\leveldb/MANIFEST-000001
+2026/04/18-12:30:02.726 17b0 Reusing MANIFEST C:\Users\user\Desktop\ais\wa_session\browser_profile\Default\Local Storage\leveldb/MANIFEST-000001
+2026/04/18-12:30:02.732 17b0 Recovering log #3
+2026/04/18-12:30:02.734 17b0 Reusing old log C:\Users\user\Desktop\ais\wa_session\browser_profile\Default\Local Storage\leveldb/000003.log 

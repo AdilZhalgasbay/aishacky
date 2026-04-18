@@ -1,5 +1,6 @@
 import { safeBackendJson } from '@/lib/backend'
 import IncidentsClient from './IncidentsClient'
+import DashboardWrapper from '@/components/layout/DashboardWrapper'
 
 export const dynamic = 'force-dynamic'
 export default async function IncidentsPage() {
@@ -10,10 +11,12 @@ export default async function IncidentsPage() {
   ])
 
   return (
-    <IncidentsClient
-      incidents={incidents.incidents || []}
-      tasks={tasks.tasks || []}
-      employees={employees.employees || []}
-    />
+    <DashboardWrapper>
+      <IncidentsClient
+        incidents={incidents.incidents || []}
+        tasks={tasks.tasks || []}
+        employees={employees.employees || []}
+      />
+    </DashboardWrapper>
   )
 }

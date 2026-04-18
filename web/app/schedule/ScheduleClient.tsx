@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getDemoDate } from '@/lib/dateUtils'
 
 interface Substitution {
   id: string
@@ -91,7 +92,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
           absent_teacher_name: absentTeacher,
           reason,
           class_name: className,
-          date: new Date().toISOString().split('T')[0],
+          date: getDemoDate(),
         }),
       })
       const data = await res.json()
@@ -119,7 +120,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
           message: commandText,
           reason,
           class_name: className,
-          date: new Date().toISOString().split('T')[0],
+          date: getDemoDate(),
         }),
       })
       const data = await res.json()
