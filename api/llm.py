@@ -20,7 +20,7 @@ client = OpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 
-MODEL = "deepseek-ai/deepseek-v3.2"
+MODEL = "meta/llama-3.3-70b-instruct"
 
 
 def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> str:
@@ -36,7 +36,6 @@ def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> str:
         temperature=0.2,
         top_p=0.95,
         max_tokens=max_tokens,
-        extra_body={"chat_template_kwargs": {"thinking": True}},
         stream=True,
     )
     result = []

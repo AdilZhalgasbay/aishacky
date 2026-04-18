@@ -1,3 +1,2 @@
-2026/04/18-01:33:22.504 16edb Reusing MANIFEST /home/eraly/Downloads/aishackeeeer/wa_session/browser_profile/Default/Service Worker/Database/MANIFEST-000001
-2026/04/18-01:33:22.508 16edb Recovering log #3
-2026/04/18-01:33:22.509 16edb Reusing old log /home/eraly/Downloads/aishackeeeer/wa_session/browser_profile/Default/Service Worker/Database/000003.log 
+2026/04/18-11:30:02.668 306c Creating DB C:\Users\user\Desktop\ais\wa_session\browser_profile\Default\Service Worker\Database since it was missing.
+2026/04/18-11:30:02.675 306c Reusing MANIFEST C:\Users\user\Desktop\ais\wa_session\browser_profile\Default\Service Worker\Database/MANIFEST-000001
