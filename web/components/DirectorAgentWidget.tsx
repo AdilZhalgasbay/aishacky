@@ -57,7 +57,7 @@ export default function DirectorAgentWidget() {
     setResults(prev => [...prev, { id: Date.now().toString(), type: 'user', text: msg }])
     setLoading(true)
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 25000)
+    const timer = setTimeout(() => controller.abort(), 55000)
     try {
       const res = await fetch('/api/agent/message', {
         method: 'POST',
@@ -78,7 +78,7 @@ export default function DirectorAgentWidget() {
     } catch (e) {
       clearTimeout(timer)
       if (e instanceof Error && e.name === 'AbortError') {
-        setError('Время ожидания истекло (25 сек). Попробуйте снова.')
+        setError('Время ожидания истекло (55 сек). Попробуйте снова.')
       } else {
         setError(e instanceof Error ? e.message : 'Ошибка')
       }
@@ -92,7 +92,7 @@ export default function DirectorAgentWidget() {
     setLoading(true)
     setError(null)
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 30000)
+    const timer = setTimeout(() => controller.abort(), 55000)
     try {
       const form = new FormData()
       form.append('file', new File([blob], 'voice.webm', { type: mimeType }))
@@ -116,7 +116,7 @@ export default function DirectorAgentWidget() {
     } catch (e) {
       clearTimeout(timer)
       if (e instanceof Error && e.name === 'AbortError') {
-        setError('Время ожидания истекло (30 сек). Попробуйте снова.')
+        setError('Время ожидания истекло (55 сек). Попробуйте снова.')
       } else {
         setError(e instanceof Error ? e.message : 'Ошибка голоса')
       }

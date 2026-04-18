@@ -26,7 +26,7 @@ client = OpenAI(
     http_client=httpx.Client(timeout=_TIMEOUT),
 )
 
-MODEL = "deepseek-ai/deepseek-v3.2"
+MODEL = "meta/llama-3.3-70b-instruct"
 
 
 def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: str = None) -> str:
