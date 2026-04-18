@@ -218,7 +218,7 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
             color: tab === t ? 'var(--primary)' : 'var(--text-muted)',
             fontWeight: tab === t ? 700 : 500, fontSize: 14, cursor: 'pointer',
           }}>
-            {t === 'today' ? 'Замены сегодня' : t === 'find' ? 'Найти замену' : 'Учителя'}
+            {t === 'today' ? 'Замены' : t === 'find' ? 'Найти замену' : 'Учителя'}
           </button>
         ))}
       </div>
@@ -239,6 +239,7 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
             <table className="data-table">
               <thead>
                 <tr>
+                   <th>Дата</th>
                   <th>Урок</th>
                   <th>Класс</th>
                   <th>Предмет</th>
@@ -252,6 +253,9 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
               <tbody>
                 {substitutions.map(sub => (
                   <tr key={sub.id}>
+                   <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                      {sub.date ? new Date(sub.date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) : '—'}
+                    </td>
                     <td style={{ fontWeight: 700 }}>{sub.period}</td>
                     <td style={{ fontWeight: 700 }}>{sub.class_name || '—'}</td>
                     <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{sub.subject || '—'}</td>

@@ -25,21 +25,22 @@ def parse_attendance(req: AttendanceRequest):
 ПРАВИЛА:
 1. Ищи названия классов (1А, 11Б и т.д.)
 2. Считай число присутствующих и отсутствующих.
-3. 'total_portions' — это сумма всех присутствующих.
+3. 'total_portions' — это сумма всех КТО ОБЕДАЕТ (обычно равно числу присутствующих, если не указано иное).
 4. 'total_absent' — это сумма всех отсутствующих.
+5. Если учитель пишет просто "11Б: 20", считай это за "present: 20, absent: 0".
 
 Сообщения:
 {text}
 
 Верни JSON:
-{{
+{
   "date": "{today}",
   "total_portions": 0,
   "total_absent": 0,
   "classes": [
-    {{"class": "название", "present": 0, "absent": 0}}
+    {"class": "название", "present": 0, "absent": 0}
   ]
-}}"""
+}"""
 
     result = chat_json(SYSTEM, prompt)
     result.setdefault("date", today)
