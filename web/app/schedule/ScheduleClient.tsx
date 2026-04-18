@@ -37,6 +37,7 @@ interface ClassInfo {
 }
 
 interface Props {
+  initialDate: string
   substitutions: Substitution[]
   employees: Employee[]
   classes: ClassInfo[]
@@ -60,7 +61,7 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Ошибка при поиске замены'
 }
 
-export default function ScheduleClient({ substitutions, employees, classes }: Props) {
+export default function ScheduleClient({ initialDate, substitutions, employees, classes }: Props) {
   const router = useRouter()
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [loading, setLoading] = useState(false)
@@ -92,7 +93,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
           absent_teacher_name: absentTeacher,
           reason,
           class_name: className,
-          date: getDemoDate(),
+          date: initialDate,
         }),
       })
       const data = await res.json()
@@ -120,7 +121,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
           message: commandText,
           reason,
           class_name: className,
-          date: getDemoDate(),
+          date: initialDate,
         }),
       })
       const data = await res.json()
@@ -137,7 +138,14 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
     }
   }
 
-  const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
+  const navigateDate = (offset: number) => {
+    const d = new Date(initialDate)
+    d.setDate(d.getDate() + offset)
+    const nextDate = d.toISOString().split('T')[0]
+    router.push(`/schedule?date=${nextDate}`)
+  }
+
+  const displayDate = new Date(initialDate).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
   const STATUS_COLOR: Record<string, string> = { confirmed: '#16A34A', pending: '#D97706', cancelled: '#DC2626' }
 
   return (
@@ -147,8 +155,14 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
       <div className="page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 className="page-title">Расписание и замены</h1>
-            <p className="page-subtitle" style={{ textTransform: 'capitalize' }}>{today}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+              <h1 className="page-title" style={{ margin: 0 }}>Расписание и замены</h1>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={() => navigateDate(-1)} className="btn btn-ghost btn-xs" style={{ padding: '2px 8px' }}>← Пред. день</button>
+                <button onClick={() => navigateDate(1)} className="btn btn-ghost btn-xs" style={{ padding: '2px 8px' }}>След. день →</button>
+              </div>
+            </div>
+            <p className="page-subtitle" style={{ textTransform: 'capitalize' }}>{displayDate}</p>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#dcfce7', borderRadius: 8 }}>
@@ -168,7 +182,6 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
           { label: 'Замены сегодня', val: substitutions.length, color: '#7C3AED', bg: '#ede9fe' },
           { label: 'Подтверждены', val: substitutions.filter(s => s.status === 'confirmed').length, color: '#16A34A', bg: '#dcfce7' },
           { label: 'Ожидают', val: substitutions.filter(s => s.status === 'pending').length, color: '#D97706', bg: '#fef3c7' },
-          { label: 'Уведомлены', val: substitutions.filter(s => s.notified).length, color: '#2563EB', bg: '#dbeafe' },
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.val}</div>
@@ -234,7 +247,6 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
                   <th>Замещает</th>
                   <th>Причина</th>
                   <th>Статус</th>
-                  <th>Уведомлён</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,17 +265,6 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
                       <span style={{ background: `${STATUS_COLOR[sub.status]}22`, color: STATUS_COLOR[sub.status] || '#94A3B8', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
                         {sub.status === 'confirmed' ? 'Подтверждён' : sub.status === 'pending' ? 'Ожидает' : 'Отменён'}
                       </span>
-                    </td>
-                    <td>
-                      {sub.notified ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#16A34A" viewBox="0 0 16 16">
-                          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#94A3B8" viewBox="0 0 16 16">
-                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                        </svg>
-                      )}
                     </td>
                   </tr>
                 ))}
@@ -358,9 +359,7 @@ export default function ScheduleClient({ substitutions, employees, classes }: Pr
                           Урок {sub.period} • {sub.class_name || 'класс не указан'} • {sub.subject || '—'}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                          {sub.substitute_name
-                            ? `${sub.substitute_name} • уведомление: ${sub.notification_status === 'sent' ? 'отправлено' : sub.notification_status === 'no_chat_id' ? 'нет chat_id' : 'ожидает'}`
-                            : 'Свободный учитель не найден автоматически'}
+                          {sub.substitute_name || 'Свободный учитель не найден автоматически'}
                         </div>
                       </div>
                     ))}

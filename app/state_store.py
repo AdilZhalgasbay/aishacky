@@ -437,6 +437,8 @@ def list_employees() -> list[dict[str, Any]]:
             "is_available": bool(row.get("is_available", True)),
             "phone": row.get("phone"),
         }
+        if "telegram_id" not in employee:
+            employee["telegram_id"] = None
         if employee["role"] == "teacher" and employee["name"] in unavailable:
             employee["is_available"] = False
         employees.append(employee)
@@ -475,6 +477,43 @@ def find_employee_by_name(name: str | None) -> dict[str, Any] | None:
             if employee.get("role") == role:
                 return employee
     return None
+
+
+def find_teacher_by_tg_username(username: str | None) -> dict[str, Any] | None:
+    if not username:
+        return None
+    
+    search_target = username if username.startswith("@") else f"@{username}"
+    employees = list_employees()
+    for employee in employees:
+        if employee.get("role") == "teacher":
+            tg_id = employee.get("telegram_id")
+            if tg_id and (tg_id == search_target or tg_id == username):
+                return employee
+    return None
+
+
+def find_teacher_by_chat_id(chat_id: int | None) -> dict[str, Any] | None:
+    if not chat_id:
+        return None
+    employees = list_employees()
+    for employee in employees:
+        if employee.get("role") == "teacher" and _coerce_chat_id(employee.get("tg_chat_id")) == chat_id:
+            return employee
+    return None
+
+
+@locked_state
+def update_employee(employee_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+    body = dict(updates)
+    rows = _rest_request(
+        "PATCH",
+        "employees",
+        params={"id": f"eq.{employee_id}"},
+        json_body=_strip_none(body),
+        prefer="return=representation",
+    ) or []
+    return rows[0] if rows else None
 
 
 def list_classes() -> list[dict[str, Any]]:
@@ -723,6 +762,15 @@ def update_task(task_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
 
 
 @locked_state
+def update_substitution_status(substitution_id: str, status: str):
+    _management_query(
+        "substitutions",
+        method="PATCH",
+        params={"id": f"eq.{substitution_id}"},
+        json_data={"status": status}
+    )
+
+
 def replace_substitutions_for_teacher(
     *,
     absent_teacher_name: str,

@@ -22,21 +22,27 @@ def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | No
         "отсутствуют",
         "человек",
     ]
-    incident_kw = [
-        "сломал", "сломана", "сломано", "течёт", "не работает", "нет мела",
-        "нет воды", "не включается", "разбит", "поломан", "протекает", "замок",
-        "проектор", "потолок",
-        "плохо", "температура", "вырвало", "кровь", "травма", "упал",
-        "драка", "посторонний", "шприц"
+    absence_kw = [
+        "заболел", "заболела", "болею", "плохо", "больнице", "справка",
+        "курсах", "курсы", "олимпиада", "выезд", "конференция",
+        "отгул", "отпуск",
+        "семейным", "свадьба", "личным", "делам"
     ]
 
-    resolution_kw = [
-        "починил", "готово", "исправил", "заменил", "выполнил", "решил", "сделано", "починили", "устранил", "починила"
+    confirmation_kw = [
+        "ок", "хор", "принял", "приняла", "понял", "поняла", "согласен", "согласна", "выйду", "буду", "сделаю"
     ]
 
     if any(kw in text_l for kw in attendance_kw) and any(char.isdigit() for char in text):
         req = AttendanceRequest(messages=[f"{sender}: {text}"])
         return "attendance", parse_attendance(req)
+
+    # Мелкие подтверждения (обычно 1-2 слова)
+    if len(text.split()) <= 3 and any(kw == text_l.strip(" .!,") for kw in confirmation_kw):
+        return "substitution_confirm", {"text": text, "sender": sender}
+
+    if any(kw in text_l for kw in absence_kw):
+        return "absence", {"text": text, "sender": sender}
 
     if any(kw in text_l for kw in resolution_kw):
         req = IncidentRequest(message=text, sender=sender)

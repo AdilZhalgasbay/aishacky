@@ -28,13 +28,16 @@ def _coerce_chat_id(value: Any) -> int | None:
 
 
 def _send_telegram(chat_id: int | None, text: str) -> bool:
-    if chat_id is None:
+    if not chat_id:
+        print("[Notifications] _send_telegram skip: no chat_id")
         return False
     try:
+        from api.telegram import send_message
+        print(f"[Notifications] TO {chat_id}: {text[:60]}...")
         send_message(chat_id, text)
         return True
     except Exception as exc:
-        print(f"[notify telegram] {exc}")
+        print(f"[Notifications] ERROR sending to {chat_id}: {exc}")
         return False
 
 
@@ -103,20 +106,34 @@ def notify_incident_assignee(incident: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def notify_substitution_assignee(substitution: dict[str, Any]) -> dict[str, Any]:
+def notify_substitution_assignee(substitution: dict[str, Any], target_chat_id: int | None = None) -> dict[str, Any]:
     employee = state_store.find_employee_by_name(substitution.get("substitute_name"))
-    chat_id = _employee_chat_id(employee)
+    
+    # Приоритизируем target_chat_id (общий чат), если он передан
+    chat_id = target_chat_id or _employee_chat_id(employee)
+    
+    tag = ""
+    if employee:
+        # Если есть telegram_id (например @username или chat_id), используем его для тега
+        tg_id = employee.get("telegram_id")
+        if tg_id:
+            if not str(tg_id).startswith("@"):
+                tag = f"@{tg_id} "
+            else:
+                tag = f"{tg_id} "
+        else:
+            # Fallback на имя если нет юзернейма
+            tag = f"*{employee.get('name')}*, "
+
+    print(f"[Notifications] Substitution: class={substitution.get('class_name')}, sub={substitution.get('substitute_name')}, chat={chat_id}")
     text = (
-        "📚 *Назначена замена*\n"
-        f"📅 Дата: {substitution.get('date') or 'сегодня'}\n"
-        f"🏫 Класс: {substitution.get('class_name') or 'не указан'}\n"
-        f"🕒 Урок: {substitution.get('period') or '—'}\n"
-        f"📘 Предмет: {substitution.get('subject') or '—'}\n"
-        f"🚪 Кабинет: {substitution.get('room') or '—'}\n"
-        f"ℹ️ Причина: {substitution.get('reason') or 'отсутствие коллеги'}"
+        f"📚 *{substitution.get('class_name') or 'Класс'}*, "
+        f"каб. {substitution.get('room') or '—'}, "
+        f"{substitution.get('subject') or '—'} — "
+        f"заменяет *{substitution.get('substitute_name') or '...'}*"
     )
 
-    sent = _send_telegram(chat_id, text)
+    sent = _send_telegram(chat_id or _coerce_chat_id(os.getenv("DIRECTOR_TG_CHAT_ID")), text)
     return {
         "notified": sent,
         "notification_status": "sent" if sent else ("no_chat_id" if chat_id is None else "failed"),
