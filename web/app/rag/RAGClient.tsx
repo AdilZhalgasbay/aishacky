@@ -41,6 +41,11 @@ export default function RAGClient({ docs }: Props) {
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState<{ query: string; answer: string; sources: RagSource[] }[]>([])
   const [tab, setTab] = useState<'chat' | 'docs'>('chat')
+  const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({})
+
+  function toggleSource(key: string) {
+    setExpandedSources(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   async function handleQuery() {
     if (!query.trim()) return
@@ -201,13 +206,32 @@ export default function RAGClient({ docs }: Props) {
                     </div>
                     {/* Sources */}
                     {item.sources?.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-                        <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 600 }}>Источники:</span>
-                        {item.sources.map((s, j) => (
-                          <span key={j} style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 600, background: '#dbeafe', padding: '2px 8px', borderRadius: 12 }}>
-                            {s.doc_name} №{s.doc_number}
-                          </span>
-                        ))}
+                      <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-light)', fontWeight: 600 }}>📄 Источники:</span>
+                        {item.sources.map((s, j) => {
+                          const key = `${i}-${j}`
+                          const isOpen = expandedSources[key]
+                          return (
+                            <div key={j} style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 10, overflow: 'hidden' }}>
+                              <div
+                                onClick={() => toggleSource(key)}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', cursor: 'pointer' }}
+                              >
+                                <span style={{ fontSize: 12, color: '#7C3AED', fontWeight: 700 }}>
+                                  {s.doc_name} №{s.doc_number}
+                                </span>
+                                <span style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>
+                                  {isOpen ? '▲ Свернуть' : '▼ Показать текст'}
+                                </span>
+                              </div>
+                              {isOpen && s.text && (
+                                <div style={{ padding: '8px 12px 12px', borderTop: '1px solid #ddd6fe', fontSize: 12, color: 'var(--text)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                                  {s.text}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
                     {i < history.length - 1 && <hr className="divider" />}

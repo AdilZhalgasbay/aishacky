@@ -53,7 +53,7 @@ def rag_query(req: RagRequest):
         doc_name, doc_number = _detect_doc(result["text"])
         sources.append(
             {
-                "text": result["text"][:200] + "...",
+                "text": result["text"],
                 "score": result["score"],
                 "doc_name": doc_name,
                 "doc_number": doc_number,
