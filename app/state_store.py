@@ -763,11 +763,12 @@ def update_task(task_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
 
 @locked_state
 def update_substitution_status(substitution_id: str, status: str):
-    _management_query(
+    _rest_request(
+        "PATCH",
         "substitutions",
-        method="PATCH",
         params={"id": f"eq.{substitution_id}"},
-        json_data={"status": status}
+        json_body={"status": status},
+        prefer="return=representation",
     )
 
 

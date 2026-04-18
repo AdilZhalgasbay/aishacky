@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 
 const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: './wa_session' }),
+    authStrategy: new LocalAuth({ dataPath: '../wa_session' }),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
