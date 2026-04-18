@@ -296,12 +296,11 @@ def create_scheduler() -> AsyncIOScheduler:
     timezone = get_timezone()
     scheduler = AsyncIOScheduler(timezone=timezone)
     if is_scheduler_enabled():
-        scheduler.add_job(collect_wa_attendance, "cron", hour=9, minute=0, id="wa_attendance")
+        scheduler.add_job(collect_wa_attendance, "cron", minute="*", id="wa_attendance")
         scheduler.add_job(
             collect_wa_incidents,
             "cron",
-            hour="8-17",
-            minute="0,30",
+            minute="*",
             id="wa_incidents",
         )
     if is_telegram_scheduler_enabled():

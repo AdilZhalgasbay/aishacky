@@ -520,24 +520,22 @@ def upsert_attendance_logs(
         "attendance_logs",
         params={"select": "*", "date": f"eq.{target_date}"},
     )
-    existing_by_class_id = {
-        row.get("class_id"): row
-        for row in existing_rows
-        if row.get("class_id")
-    }
+    existing_by_class_id = {row.get("class_id"): row for row in existing_rows if row.get("class_id")}
+    existing_by_notes = {row.get("notes"): row for row in existing_rows if row.get("notes")}
 
     for entry in classes:
         class_id, canonical_name = _resolve_class_id(entry.get("class"))
+        notes_val = None if class_id else f"class_name:{canonical_name or entry.get('class')}"
         payload = {
             "class_id": class_id,
             "date": target_date,
             "present_count": int(entry.get("present", 0)),
             "absent_count": int(entry.get("absent", 0)),
             "raw_message": raw_message,
-            "notes": None if class_id else f"class_name:{canonical_name or entry.get('class')}",
+            "notes": notes_val,
             "sent_to_canteen": False,
         }
-        existing = existing_by_class_id.get(class_id) if class_id else None
+        existing = existing_by_class_id.get(class_id) if class_id else existing_by_notes.get(notes_val)
         if existing:
             _rest_request(
                 "PATCH",
@@ -574,14 +572,15 @@ def create_or_update_attendance_log(payload: dict[str, Any]) -> dict[str, Any]:
         "attendance_logs",
         params={"select": "*", "date": f"eq.{target_date}"},
     )
-    existing = next((row for row in existing_rows if row.get("class_id") == class_id and class_id), None)
+    notes_val = payload.get("notes") or (None if class_id else f"class_name:{canonical_name or requested_class_name}")
+    existing = next((row for row in existing_rows if (row.get("class_id") == class_id and class_id) or (not class_id and row.get("notes") == notes_val)), None)
     body = {
         "class_id": class_id,
         "date": target_date,
         "present_count": int(payload.get("present_count", 0)),
         "absent_count": int(payload.get("absent_count", 0)),
         "raw_message": payload.get("raw_message"),
-        "notes": payload.get("notes") or (None if class_id else f"class_name:{canonical_name or requested_class_name}"),
+        "notes": notes_val,
         "sent_to_canteen": bool(payload.get("sent_to_canteen", False)),
     }
     if existing:
