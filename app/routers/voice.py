@@ -12,7 +12,7 @@ class VoiceTextRequest(BaseModel):
     text: str
 
 
-def _create_tasks_with_notifications(tasks: list[dict]) -> list[dict]:
+def _create_tasks_with_notifications(tasks: list[dict], source: str = "voice") -> list[dict]:
     created = []
     for task in tasks:
         compliance = rag.check_compliance(
@@ -25,7 +25,7 @@ def _create_tasks_with_notifications(tasks: list[dict]) -> list[dict]:
                 "assigned_to_name": task.get("assignee"),
                 "due_date": task.get("deadline"),
                 "priority": task.get("priority") or "medium",
-                "source": "voice",
+                "source": source,
                 "compliance": compliance,
             }
         )
@@ -48,7 +48,7 @@ def _create_tasks_with_notifications(tasks: list[dict]) -> list[dict]:
 def parse_tasks_text(req: VoiceTextRequest):
     """Парсинг текстовой команды директора в задачи."""
     tasks = parse_tasks_from_text(req.text)
-    created = _create_tasks_with_notifications(tasks)
+    created = _create_tasks_with_notifications(tasks, source="text")
     return {"tasks": created, "count": len(created)}
 
 @router.post("/parse-tasks-audio")
@@ -57,5 +57,5 @@ def parse_tasks_audio(file: UploadFile = File(...)):
     audio_bytes = file.file.read()
     mime = file.content_type or "audio/wav"
     tasks = parse_tasks_from_audio(audio_bytes, mime_type=mime)
-    created = _create_tasks_with_notifications(tasks)
+    created = _create_tasks_with_notifications(tasks, source="voice")
     return {"tasks": created, "count": len(created)}
