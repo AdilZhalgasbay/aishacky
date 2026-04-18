@@ -1,8 +1,6 @@
 node_modules
 .next
 .venv/
-.env
-.env.local
 __pycache__
 *.pyc
 .DS_Store
