@@ -38,13 +38,13 @@ def auto_route_message(text: str, sender: str) -> tuple[str, dict[str, Any] | No
         req = AttendanceRequest(messages=[f"{sender}: {text}"])
         return "attendance", parse_attendance(req)
 
-    if any(kw in text_l for kw in incident_kw):
-        req = IncidentRequest(message=text, sender=sender)
-        return "incident", parse_incident(req)
-
     if any(kw in text_l for kw in resolution_kw):
         req = IncidentRequest(message=text, sender=sender)
         return "resolution", parse_resolution(req)
+
+    if any(kw in text_l for kw in incident_kw):
+        req = IncidentRequest(message=text, sender=sender)
+        return "incident", parse_incident(req)
 
     return "general", None
 

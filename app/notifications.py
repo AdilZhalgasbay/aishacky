@@ -147,36 +147,19 @@ def send_attendance_digest(
             "total_absent": sum(row["absent_count"] for row in rows),
         }
 
-    updated = state_store.mark_attendance_sent(target_date)
-    total_portions = sum(row["present_count"] for row in rows)
-    total_absent = sum(row["absent_count"] for row in rows)
-
-    canteen_chat_id = _coerce_chat_id(os.getenv("CANTEEN_TG_CHAT_ID"))
-    director_chat_id = _coerce_chat_id(os.getenv("DIRECTOR_TG_CHAT_ID"))
-
-    canteen_text = (
-        f"🍽️ *Порций на {target_date}: {total_portions}*\n"
-        f"❌ Отсутствуют: {total_absent}\n"
-        f"🤖 Отправлено автоматически ({source})"
-    )
-
-    director_lines = [
-        f"📊 *Свод по столовой {target_date}*",
-        f"✅ Всего порций: *{total_portions}*",
-        f"❌ Отсутствуют: *{total_absent}*",
-        f"🤖 Режим: {source}",
-    ]
-    for row in rows[:10]:
-        total = row["present_count"] + row["absent_count"]
-        director_lines.append(
-            f"  • {row['class_name']}: {row['present_count']} / {total}"
-        )
-
     notified_channels: list[str] = []
-    if _send_telegram(canteen_chat_id, canteen_text):
+    canteen_sent = _send_telegram(canteen_chat_id, canteen_text)
+    if canteen_sent:
         notified_channels.append("canteen_telegram")
+    
     if _send_telegram(director_chat_id, "\n".join(director_lines)):
         notified_channels.append("director_telegram")
+
+    # Only mark as sent if at least the canteen notification went through
+    # This ensures it will be retried if the primary delivery fails
+    updated = False
+    if canteen_sent or force:
+        updated = state_store.mark_attendance_sent(target_date)
 
     return {
         "success": True,
