@@ -262,19 +262,24 @@ def get_agent_history(limit: int = 100):
 def handle_agent_message(req: AgentMessageRequest):
     return _handle_director_message(req.text, source="text")
 
-
 @router.post("/message-audio")
 def handle_agent_audio(file: UploadFile = File(...)):
     audio_bytes = file.file.read()
     mime = file.content_type or "audio/webm"
     text = transcribe_audio(audio_bytes, mime_type=mime)
+
     if not text or "Ошибка" in text:
         return {
             "route": "general",
+            "transcript": "",
             "user_message": None,
-            "assistant_message": None,
+            "assistant_message": {
+                "role": "assistant",
+                "message_text": "Не удалось распознать голосовое сообщение. Попробуйте ещё раз или напишите текстом.",
+            },
             "result": {"message": "Не удалось распознать голосовое сообщение."},
         }
+
     payload = _handle_director_message(text, source="voice")
     payload["transcript"] = text
     return payload

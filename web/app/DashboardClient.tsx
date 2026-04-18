@@ -143,7 +143,13 @@ export default function DashboardClient() {
     }
     load()
     const interval = setInterval(load, 60 * 1000) // 1 минута
-    return () => clearInterval(interval)
+
+    // Мгновенное обновление когда виджет AI сохранил данные в БД
+    window.addEventListener('dashboard-refresh', load)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('dashboard-refresh', load)
+    }
   }, [today])
 
   const metricCards = [

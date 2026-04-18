@@ -232,7 +232,7 @@ export default function AttendanceClient({ attendance, classes }: Props) {
                       </tr>
                     )
                   })}
-                  <tr style={{ background: '#F8FAFC', fontWeight: 700 }}>
+                  <tr style={{ background: 'var(--card-hover, rgba(255,255,255,0.04))', fontWeight: 700 }}>
                     <td>ИТОГО</td>
                     <td style={{ color: '#16A34A' }}>{totalPresent}</td>
                     <td style={{ color: '#DC2626' }}>{totalAbsent}</td>

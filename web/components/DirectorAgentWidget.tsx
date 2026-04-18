@@ -72,6 +72,8 @@ export default function DirectorAgentWidget() {
         data.assistant_message?.message_text || 'Выполнено.',
         data.route,
       )
+      // Немедленно обновляем дашборд — не ждём 60-секундный poll
+      window.dispatchEvent(new CustomEvent('dashboard-refresh'))
       router.refresh()
     } catch (e) {
       clearTimeout(timer)
@@ -98,12 +100,18 @@ export default function DirectorAgentWidget() {
       clearTimeout(timer)
       if (!res.ok) throw new Error('Голосовая обработка не удалась')
       const data = await res.json()
-      const transcript = data.transcript || '(голосовое сообщение)'
-      setResults(prev => [...prev, { id: Date.now().toString(), type: 'user', text: `Голос: ${transcript}` }])
-      addAI(
-        data.assistant_message?.message_text || 'Выполнено.',
-        data.route,
-      )
+      const transcript = data.transcript
+      // Показываем что распознал ИИ (или иконку если транскрипт пустой)
+      const userText = transcript
+        ? `🎤 ${transcript}`
+        : '🎤 (голосовое сообщение)'
+      setResults(prev => [...prev, { id: Date.now().toString(), type: 'user', text: userText }])
+      const aiText =
+        data.assistant_message?.message_text ||
+        data.result?.message ||
+        'Выполнено.'
+      addAI(aiText, data.route)
+      window.dispatchEvent(new CustomEvent('dashboard-refresh'))
       router.refresh()
     } catch (e) {
       clearTimeout(timer)
