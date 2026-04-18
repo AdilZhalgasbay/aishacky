@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import {
   Users, Home, AlertTriangle, ClipboardList, RefreshCw,
-  BarChart3, ArrowRight, Utensils, TrendingUp, Clock,
-  Mic, BookOpen, MessageCircle, CheckCircle2, XCircle,
-  Activity, Zap, ChevronRight, Calendar,
+  BarChart3, ArrowRight, Utensils,
+  Mic, BookOpen, CheckCircle2, XCircle,
+  ChevronRight, Calendar,
 } from 'lucide-react'
 
 export interface DashboardIncident {
@@ -72,15 +72,15 @@ function PriorityDot({ priority }: { priority: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; color: string }> = {
-    open:        { bg: '#DBEAFE', color: '#1D4ED8' },
-    in_progress: { bg: '#FEF3C7', color: '#92400E' },
-    resolved:    { bg: '#D1FAE5', color: '#065F46' },
-    completed:   { bg: '#D1FAE5', color: '#065F46' },
-    confirmed:   { bg: '#D1FAE5', color: '#065F46' },
-    pending:     { bg: '#F1F5F9', color: '#475569' },
-    cancelled:   { bg: '#FEE2E2', color: '#991B1B' },
+    open:        { bg: 'rgba(99,102,241,0.15)',  color: '#A5B4FC' },
+    in_progress: { bg: 'rgba(245,158,11,0.15)',  color: '#FCD34D' },
+    resolved:    { bg: 'rgba(16,185,129,0.15)',  color: '#6EE7B7' },
+    completed:   { bg: 'rgba(16,185,129,0.15)',  color: '#6EE7B7' },
+    confirmed:   { bg: 'rgba(16,185,129,0.15)',  color: '#6EE7B7' },
+    pending:     { bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' },
+    cancelled:   { bg: 'rgba(239,68,68,0.15)',   color: '#FCA5A5' },
   }
-  const style = map[status] || { bg: '#F1F5F9', color: '#475569' }
+  const style = map[status] || { bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' }
   return (
     <span style={{
       background: style.bg, color: style.color,
@@ -118,9 +118,9 @@ export default function DashboardClient() {
         fetchJson(`/schedule/substitutions?date_from=${today}`, { substitutions: [] }),
       ])
 
-      const attendanceData  = attendance    as { classes: { present_count: number; absent_count: number }[]; total_present: number; total_absent: number }
-      const incidentsData   = incidents     as { incidents: DashboardIncident[] }
-      const tasksData       = tasks         as { tasks: DashboardTask[] }
+      const attendanceData    = attendance    as { classes: { present_count: number; absent_count: number }[]; total_present: number; total_absent: number }
+      const incidentsData     = incidents     as { incidents: DashboardIncident[] }
+      const tasksData         = tasks         as { tasks: DashboardTask[] }
       const substitutionsData = substitutions as { substitutions: DashboardSubstitution[] }
 
       const allIncidents = incidentsData.incidents || []
@@ -142,80 +142,48 @@ export default function DashboardClient() {
       setLoading(false)
     }
     load()
-
-    const interval = setInterval(load, 30000) // auto-refresh every 30s
+    const interval = setInterval(load, 30000)
     return () => clearInterval(interval)
   }, [today])
 
   const metricCards = [
-    {
-      label: 'Присутствуют',
-      value: loading ? '—' : stats.totalPresent,
-      icon: Users,
-      color: '#10B981',
-      iconBg: 'rgba(16,185,129,0.12)',
-      borderColor: 'rgba(16,185,129,0.2)',
-      href: '/attendance',
-      trend: '+2',
-    },
-    {
-      label: 'Отсутствуют',
-      value: loading ? '—' : stats.totalAbsent,
-      icon: Home,
-      color: '#F59E0B',
-      iconBg: 'rgba(245,158,11,0.12)',
-      borderColor: 'rgba(245,158,11,0.2)',
-      href: '/attendance',
-      trend: null,
-    },
-    {
-      label: 'Инциденты',
-      value: loading ? '—' : stats.openIncidents,
-      icon: AlertTriangle,
-      color: '#EF4444',
-      iconBg: 'rgba(239,68,68,0.12)',
-      borderColor: 'rgba(239,68,68,0.2)',
-      href: '/incidents',
-      trend: null,
-    },
-    {
-      label: 'Задачи',
-      value: loading ? '—' : stats.pendingTasks,
-      icon: ClipboardList,
-      color: '#3B82F6',
-      iconBg: 'rgba(59,130,246,0.12)',
-      borderColor: 'rgba(59,130,246,0.2)',
-      href: '/incidents',
-      trend: null,
-    },
-    {
-      label: 'Замены',
-      value: loading ? '—' : stats.subCount,
-      icon: RefreshCw,
-      color: '#8B5CF6',
-      iconBg: 'rgba(139,92,246,0.12)',
-      borderColor: 'rgba(139,92,246,0.2)',
-      href: '/schedule',
-      trend: null,
-    },
+    { label: 'Присутствуют', value: loading ? '—' : stats.totalPresent, icon: Users,         color: '#10B981', iconBg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.2)',  href: '/attendance' },
+    { label: 'Отсутствуют',  value: loading ? '—' : stats.totalAbsent,  icon: Home,          color: '#F59E0B', iconBg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.2)',  href: '/attendance' },
+    { label: 'Инциденты',    value: loading ? '—' : stats.openIncidents, icon: AlertTriangle, color: '#EF4444', iconBg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.2)',   href: '/incidents'  },
+    { label: 'Задачи',       value: loading ? '—' : stats.pendingTasks,  icon: ClipboardList, color: '#6366F1', iconBg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.2)',  href: '/incidents'  },
+    { label: 'Замены',       value: loading ? '—' : stats.subCount,      icon: RefreshCw,     color: '#8B5CF6', iconBg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.2)', href: '/schedule'   },
   ]
 
   const quickLinks = [
-    { label: 'Голос задача',  icon: Mic,           href: '/incidents',  color: '#3B82F6' },
-    { label: 'Приказы RAG',   icon: BookOpen,      href: '/rag',        color: '#F59E0B' },
-    { label: 'Расписание',    icon: Calendar,      href: '/schedule',   color: '#10B981' },
+    { label: 'Голос → задача', icon: Mic,      href: '/incidents', color: '#6366F1' },
+    { label: 'Приказы RAG',    icon: BookOpen,  href: '/rag',       color: '#F59E0B' },
+    { label: 'Расписание',     icon: Calendar,  href: '/schedule',  color: '#10B981' },
   ]
+
+  // ── shared card style ──
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '20px',
+  }
+
+  const sectionLinkStyle: React.CSSProperties = {
+    fontSize: 13, color: '#818CF8', fontWeight: 600,
+    display: 'flex', alignItems: 'center', gap: 3, textDecoration: 'none',
+  }
 
   return (
     <div style={{ maxWidth: 1360, margin: '0 auto' }}>
-      {/* ── Page header ── */}
+
+      {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--text)', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#F1F5F9', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
             Панель директора
           </h1>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="live-dot" style={{ width: 7, height: 7 }} />
+          <p style={{ margin: 0, color: '#64748B', fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="live-dot" />
             AI-Завуч «Aqbobek» · {dateLabel}
           </p>
         </div>
@@ -232,18 +200,14 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {/* ── Dining hall summary banner ── */}
+      {/* ── Столовая banner ── */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.04))',
         border: '1px solid rgba(16,185,129,0.2)',
         borderRadius: 'var(--radius)',
-        padding: '18px 22px',
+        padding: '16px 22px',
         marginBottom: 22,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        flexWrap: 'wrap',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -252,17 +216,17 @@ export default function DashboardClient() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
               <span className="live-dot" />
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#6EE7B7', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Свод столовой · Автоматически в 09:00
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#065F46' }}>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 900, color: '#F1F5F9' }}>
               {loading ? '—' : stats.totalPresent} порций
-              <span style={{ fontWeight: 500, fontSize: 15, color: '#047857', marginLeft: 12 }}>
+              <span style={{ fontWeight: 500, fontSize: 14, color: '#94A3B8', marginLeft: 12 }}>
                 · Отсутствуют: {loading ? '—' : stats.totalAbsent} чел.
               </span>
             </p>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#059669' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>
               По {loading ? '—' : stats.classCount} отчётам учителей из Telegram/WhatsApp
             </p>
           </div>
@@ -277,56 +241,53 @@ export default function DashboardClient() {
         {metricCards.map((card) => {
           const Icon = card.icon
           return (
-            <Link
-              key={card.label}
-              href={card.href}
-              style={{ textDecoration: 'none' }}
-            >
+            <Link key={card.label} href={card.href} style={{ textDecoration: 'none' }}>
               <div style={{
-                background: '#fff',
-                border: `1px solid ${card.borderColor}`,
+                background: 'var(--surface)',
+                border: `1px solid ${card.border}`,
                 borderRadius: 'var(--radius)',
                 padding: '18px 18px 16px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: 'var(--shadow-sm)',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLDivElement
                 el.style.transform = 'translateY(-3px)'
-                el.style.boxShadow = 'var(--shadow-lg)'
+                el.style.boxShadow = `0 8px 32px ${card.color}22`
+                el.style.borderColor = card.color + '55'
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLDivElement
                 el.style.transform = 'translateY(0)'
-                el.style.boxShadow = 'var(--shadow-sm)'
+                el.style.boxShadow = 'none'
+                el.style.borderColor = card.border
               }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: card.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 11, background: card.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
                   <Icon size={20} color={card.color} />
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: card.color, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: 4 }}>
+                <div style={{ fontSize: 30, fontWeight: 900, color: '#F1F5F9', lineHeight: 1, letterSpacing: '-0.03em', marginBottom: 4 }}>
                   {card.value}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>{card.label}</div>
+                <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>{card.label}</div>
               </div>
             </Link>
           )
         })}
       </div>
 
-      {/* ── Main grid 2 columns ── */}
+      {/* ── Инциденты + Задачи ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18 }}>
-        
+
         {/* Incidents */}
-        <div className="card">
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div className="section-title">
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: '#F1F5F9' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <AlertTriangle size={16} color="#EF4444" />
               </div>
               Активные инциденты
             </div>
-            <Link href="/incidents" style={{ fontSize: 13, color: 'var(--brand-600)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+            <Link href="/incidents" style={sectionLinkStyle}>
               Все <ArrowRight size={13} />
             </Link>
           </div>
@@ -336,10 +297,10 @@ export default function DashboardClient() {
               {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 52, borderRadius: 10 }} />)}
             </div>
           ) : recentIncidents.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '28px 20px', color: 'var(--text-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '28px 20px' }}>
               <CheckCircle2 size={28} color="#10B981" style={{ marginBottom: 8 }} />
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Инцидентов нет</div>
-              <div style={{ fontSize: 12, marginTop: 2 }}>Всё в порядке 🎉</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#F1F5F9' }}>Инцидентов нет</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: '#64748B' }}>Всё в порядке</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -348,14 +309,13 @@ export default function DashboardClient() {
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 12px', borderRadius: 10,
                   background: 'var(--surface-2)', border: '1px solid var(--border)',
-                  transition: 'all 0.15s',
                 }}>
                   <PriorityDot priority={incident.priority} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {incident.description}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>
                       {incident.location || '—'}
                     </div>
                   </div>
@@ -367,15 +327,15 @@ export default function DashboardClient() {
         </div>
 
         {/* Tasks */}
-        <div className="card">
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div className="section-title">
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ClipboardList size={16} color="#3B82F6" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: '#F1F5F9' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ClipboardList size={16} color="#6366F1" />
               </div>
               Активные задачи
             </div>
-            <Link href="/incidents" style={{ fontSize: 13, color: 'var(--brand-600)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+            <Link href="/incidents" style={sectionLinkStyle}>
               Все <ArrowRight size={13} />
             </Link>
           </div>
@@ -385,10 +345,10 @@ export default function DashboardClient() {
               {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 52, borderRadius: 10 }} />)}
             </div>
           ) : recentTasks.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '28px 20px', color: 'var(--text-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '28px 20px' }}>
               <CheckCircle2 size={28} color="#10B981" style={{ marginBottom: 8 }} />
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Задач нет</div>
-              <div style={{ fontSize: 12, marginTop: 2 }}>Всё выполнено!</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#F1F5F9' }}>Задач нет</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: '#64748B' }}>Всё выполнено</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -400,21 +360,21 @@ export default function DashboardClient() {
                 }}>
                   <PriorityDot priority={task.priority} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: '#F1F5F9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {task.title}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
+                    <div style={{ fontSize: 11, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
                       {task.assigned_to_name ? `→ ${task.assigned_to_name}` : 'Не назначено'}
                       {task.source === 'voice' && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#EDE9FE', color: '#7C3AED', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700 }}>
-                          <Mic size={9} /> voice
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: 'rgba(139,92,246,0.15)', color: '#C4B5FD', padding: '1px 6px', borderRadius: 10, fontSize: 10, fontWeight: 700 }}>
+                          <Mic size={9} /> голос
                         </span>
                       )}
                     </div>
                   </div>
                   <span style={{
                     background: PRIORITY_COLOR[task.priority] + '20',
-                    color: PRIORITY_COLOR[task.priority] || 'var(--text-muted)',
+                    color: PRIORITY_COLOR[task.priority] || '#94A3B8',
                     padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700,
                   }}>
                     {priorityLabel[task.priority] || task.priority}
@@ -426,17 +386,17 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {/* ── Substitutions ── */}
+      {/* ── Замены ── */}
       {!loading && recentSubstitutions.length > 0 && (
-        <div className="card" style={{ marginBottom: 18 }}>
+        <div style={{ ...cardStyle, marginBottom: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div className="section-title">
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: '#F1F5F9' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(139,92,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <RefreshCw size={16} color="#8B5CF6" />
               </div>
               Замены на сегодня
             </div>
-            <Link href="/schedule" style={{ fontSize: 13, color: 'var(--brand-600)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+            <Link href="/schedule" style={sectionLinkStyle}>
               Управление <ArrowRight size={13} />
             </Link>
           </div>
@@ -444,21 +404,21 @@ export default function DashboardClient() {
             {recentSubstitutions.slice(0, 6).map(sub => (
               <div key={sub.id} style={{
                 padding: '14px 16px', borderRadius: 12,
-                background: 'rgba(139,92,246,0.05)',
-                border: '1px solid rgba(139,92,246,0.15)',
+                background: 'rgba(139,92,246,0.06)',
+                border: '1px solid rgba(139,92,246,0.18)',
               }}>
-                <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6, color: 'var(--text)' }}>
+                <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6, color: '#F1F5F9' }}>
                   {sub.class_name || '—'} · Урок {sub.period}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
                   <XCircle size={13} color="#EF4444" />
-                  <span style={{ color: '#EF4444', fontWeight: 600 }}>{sub.original_teacher_name}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>→</span>
+                  <span style={{ color: '#FCA5A5', fontWeight: 600 }}>{sub.original_teacher_name}</span>
+                  <span style={{ color: '#475569' }}>→</span>
                   <CheckCircle2 size={13} color="#10B981" />
-                  <span style={{ color: '#10B981', fontWeight: 600 }}>{sub.substitute_name}</span>
+                  <span style={{ color: '#6EE7B7', fontWeight: 600 }}>{sub.substitute_name}</span>
                 </div>
                 {sub.subject && (
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{sub.subject}</div>
+                  <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>{sub.subject}</div>
                 )}
               </div>
             ))}
@@ -466,7 +426,7 @@ export default function DashboardClient() {
         </div>
       )}
 
-      {/* ── Quick links ── */}
+      {/* ── Быстрые ссылки ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {quickLinks.map((q) => {
           const Icon = q.icon
@@ -474,29 +434,28 @@ export default function DashboardClient() {
             <Link key={q.href} href={q.href} style={{
               display: 'flex', alignItems: 'center', gap: 12,
               padding: '14px 16px', borderRadius: 12,
-              background: '#fff', border: '1px solid var(--border)',
-              textDecoration: 'none', color: 'var(--text)',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              textDecoration: 'none', color: '#F1F5F9',
               fontWeight: 600, fontSize: 13,
-              boxShadow: 'var(--shadow-sm)',
               transition: 'all 0.2s',
             }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLAnchorElement
               el.style.borderColor = q.color + '55'
               el.style.transform = 'translateY(-2px)'
-              el.style.boxShadow = 'var(--shadow)'
+              el.style.background = q.color + '08'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLAnchorElement
               el.style.borderColor = 'var(--border)'
               el.style.transform = 'translateY(0)'
-              el.style.boxShadow = 'var(--shadow-sm)'
+              el.style.background = 'var(--surface)'
             }}>
               <div style={{ width: 36, height: 36, borderRadius: 9, background: q.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={18} color={q.color} />
               </div>
               {q.label}
-              <ChevronRight size={13} color="var(--text-light)" style={{ marginLeft: 'auto' }} />
+              <ChevronRight size={13} color="#475569" style={{ marginLeft: 'auto' }} />
             </Link>
           )
         })}

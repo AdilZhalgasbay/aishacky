@@ -1,554 +1,345 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { QRCodeSVG } from 'qrcode.react'
-import {
-  Bot, Zap, BookOpen, CalendarDays, Users, AlertTriangle,
-  MessageCircle, Sparkles, ArrowRight, CheckCircle2, Shield,
-  Brain, Layers, Award, ChevronRight, BarChart3,
-  CheckCircle, Loader, WifiOff, Smartphone,
-} from 'lucide-react'
+import Link from 'next/link'
+import { memo, useState } from 'react'
+import { Bot, Mic, ArrowRight, CheckCircle2, Shield, ChevronDown, Cpu, Database, Brain, FileText, Play } from 'lucide-react'
 
-const features = [
-  {
-    icon: Bot, color: '#3B82F6', bg: 'rgba(59,130,246,0.1)',
-    title: 'NLP-Парсер чатов',
-    desc: 'Учитель пишет в WhatsApp — система мгновенно разбирает посещаемость и инциденты без ручного ввода.',
-  },
-  {
-    icon: Zap, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',
-    title: 'Голосовые задачи',
-    desc: 'Надиктуйте задачу — AI разобьёт на подзадачи, назначит исполнителей и отправит уведомления.',
-  },
-  {
-    icon: CalendarDays, color: '#10B981', bg: 'rgba(16,185,129,0.1)',
-    title: 'Smart Замены',
-    desc: 'Учитель заболел — за секунды находим свободного замещающего, проверяем конфликты, уведомляем.',
-  },
-  {
-    icon: BookOpen, color: '#F59E0B', bg: 'rgba(245,158,11,0.1)',
-    title: 'RAG Приказы',
-    desc: 'Задайте вопрос по Приказам МОН РК — получите точный ответ с ссылкой на официальный источник.',
-  },
-]
+const STYLE = `
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Figtree',sans-serif;background:#08091A;color:#CBD5E1;overflow-x:hidden;}
+::selection{background:#6366F1;color:#fff;}
 
-const stats = [
-  { value: '400+', label: 'учеников',      icon: Users  },
-  { value: '20',   label: 'педагогов',     icon: Award  },
-  { value: '< 3s', label: 'время ответа AI', icon: Zap   },
-  { value: '98%',  label: 'точность NLP',  icon: Brain  },
-]
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 6vw;background:rgba(8,9,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-logo-box{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;}
+.nav-logo-text{font-size:15px;font-weight:800;color:#F8FAFC;letter-spacing:-0.02em;}
+.nav-links{display:flex;gap:32px;}
+.nav-link{font-size:14px;font-weight:500;color:#64748B;text-decoration:none;transition:color .2s;}
+.nav-link:hover{color:#F1F5F9;}
+.nav-cta{display:flex;align-items:center;gap:6px;background:#6366F1;color:#fff;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;text-decoration:none;transition:background .2s,box-shadow .2s;}
+.nav-cta:hover{background:#4F46E5;box-shadow:0 0 24px rgba(99,102,241,.5);}
 
-const techStack = [
-  { name: 'Llama 3.3-70b', role: 'Главный LLM',  color: '#3B82F6' },
-  { name: 'Gemma 3n',      role: 'Voice Parser', color: '#8B5CF6' },
-  { name: 'FAISS',         role: 'Vector RAG',   color: '#10B981' },
-  { name: 'NVIDIA NIM',    role: 'Embeddings',   color: '#F59E0B' },
-  { name: 'Supabase',      role: 'Database',     color: '#EF4444' },
-  { name: 'FastAPI',       role: 'Backend API',  color: '#06B6D4' },
-]
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 6vw 80px;position:relative;overflow:hidden;}
+.hero-glow{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:900px;height:500px;background:radial-gradient(ellipse at center,rgba(99,102,241,.18) 0%,transparent 65%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:999px;padding:6px 16px;font-size:12px;font-weight:700;color:#A5B4FC;letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px;}
+.hero-h1{font-size:clamp(42px,7vw,80px);font-weight:900;color:#F8FAFC;line-height:1.05;letter-spacing:-.04em;margin-bottom:22px;}
+.hero-h1 span{background:linear-gradient(135deg,#6366F1,#A78BFA,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:clamp(15px,2vw,19px);color:#64748B;line-height:1.75;max-width:560px;margin:0 auto 44px;}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.btn-primary{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border-radius:10px;padding:15px 32px;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 0 40px rgba(99,102,241,.4);transition:transform .2s,box-shadow .2s;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(99,102,241,.6);}
+.btn-ghost{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#CBD5E1;border-radius:10px;padding:15px 32px;font-size:15px;font-weight:600;text-decoration:none;transition:border-color .2s,background .2s;}
+.btn-ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);}
 
-const modules = [
-  { icon: Users,         label: 'Посещаемость', href: '/attendance', color: '#10B981' },
-  { icon: AlertTriangle, label: 'Инциденты',    href: '/incidents',  color: '#EF4444' },
-  { icon: CalendarDays,  label: 'Расписание',   href: '/schedule',   color: '#3B82F6' },
-  { icon: BookOpen,      label: 'RAG Приказы',  href: '/rag',        color: '#F59E0B' },
-  { icon: MessageCircle, label: 'WhatsApp',     href: '/whatsapp',   color: '#25D366' },
-  { icon: BarChart3,     label: 'Аналитика',    href: '/dashboard',  color: '#06B6D4' },
-]
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);}
+.stat{display:flex;flex-direction:column;align-items:center;padding:36px 20px;border-right:1px solid rgba(255,255,255,.07);}
+.stat-val{font-size:38px;font-weight:900;color:#F1F5F9;letter-spacing:-.04em;margin-bottom:4px;}
+.stat-label{font-size:13px;color:#475569;text-align:center;}
 
-type WAStatus = { isReady: boolean; qr: string | null; error?: string }
+.section{padding:100px 6vw;}
+.section-alt{background:rgba(255,255,255,.015);}
+.section-label{display:inline-flex;align-items:center;gap:7px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:999px;padding:5px 14px;font-size:11.5px;font-weight:700;color:#818CF8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:16px;}
+.section-title{font-size:clamp(28px,4vw,46px);font-weight:900;color:#F1F5F9;letter-spacing:-.03em;line-height:1.1;margin-bottom:12px;}
+.section-sub{font-size:15px;color:#64748B;line-height:1.7;}
 
-// ── QR Modal ──────────────────────────────────────────────────────────────────
-function QRModal({ onClose, onReady }: { onClose: () => void; onReady: () => void }) {
-  const [status, setStatus] = useState<WAStatus | null>(null)
-  const [slideUp, setSlideUp] = useState(false)
+.feature-row{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:1140px;margin:0 auto;}
+.feature-row.reverse{direction:rtl;}
+.feature-row.reverse > *{direction:ltr;}
+.feature-text{display:flex;flex-direction:column;gap:4px;}
+.feature-num{font-size:11px;font-weight:800;color:#6366F1;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;}
+.feature-h{font-size:clamp(22px,3vw,34px);font-weight:900;color:#F1F5F9;letter-spacing:-.03em;line-height:1.15;margin-bottom:12px;}
+.feature-p{font-size:15px;color:#64748B;line-height:1.75;margin-bottom:20px;}
+.feature-list{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.feature-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#94A3B8;line-height:1.55;}
+.feature-list li svg{flex-shrink:0;margin-top:2px;}
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const res = await fetch('/api/whatsapp', { cache: 'no-store' })
-      const data: WAStatus = await res.json()
-      setStatus(data)
-      if (data.isReady) {
-        // Trigger slide-up animation then navigate
-        setSlideUp(true)
-        setTimeout(() => onReady(), 600)
-      }
-    } catch {
-      setStatus({ isReady: false, qr: null, error: 'wa-bot недоступен' })
-    }
-  }, [onReady])
+/* VIDEO PLACEHOLDER */
+.video-border{padding:2px;border-radius:20px;background:linear-gradient(135deg,var(--c1),var(--c2),transparent 60%);}
+.video-wrap{background:#0D1020;border-radius:18px;aspect-ratio:16/10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;position:relative;overflow:hidden;}
+.video-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,var(--c1-alpha,rgba(99,102,241,0.06)) 0%,transparent 70%);}
+.video-play{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
+.video-label{font-size:13px;font-weight:600;color:#475569;position:relative;z-index:1;text-align:center;}
+.video-tag{font-size:11px;color:#334155;position:relative;z-index:1;}
 
-  useEffect(() => {
-    fetchStatus()
-    const id = setInterval(fetchStatus, 3000)
-    return () => clearInterval(id)
-  }, [fetchStatus])
+@keyframes float{0%,100%{transform:translate3d(0,0,0);}50%{transform:translate3d(0,-8px,0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
+.faq-item{border-bottom:1px solid rgba(255,255,255,.07);padding:22px 0;}
+.faq-q{font-size:15px;font-weight:600;color:#E2E8F0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;user-select:none;}
+.faq-a{font-size:14px;color:#64748B;line-height:1.75;margin-top:12px;}
+
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:1140px;margin:48px auto 0;}
+.tech-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;transition:border-color .2s;}
+.tech-card:hover{border-color:rgba(99,102,241,.4);}
+.tech-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.footer{border-top:1px solid rgba(255,255,255,.07);padding:28px 6vw;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+
+@media(max-width:768px){
+  .feature-row,.feature-row.reverse{grid-template-columns:1fr;direction:ltr;gap:40px;}
+  .stats-bar{grid-template-columns:1fr 1fr;}
+  .nav-links{display:none;}
+  .tech-grid{grid-template-columns:1fr 1fr;}
+}
+`
+
+/* ─── Плейсхолдер видео ─── */
+function VideoPlaceholder({ label, c1, c2 }: { label: string; c1: string; c2: string }) {
   return (
-    <>
-      {/* Blur overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 300,
-          background: 'rgba(10,15,30,0.75)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          animation: 'fadeIn 0.25s ease',
-        }}
-      />
-
-      {/* Modal card */}
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 301,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        pointerEvents: 'none',
-      }}>
-        <div style={{
-          pointerEvents: 'auto',
-          background: 'rgba(16,20,40,0.98)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 24,
-          padding: '40px 44px',
-          maxWidth: 420,
-          width: '90vw',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 20,
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.15)',
-          animation: slideUp ? 'slideUp 0.6s cubic-bezier(0.4,0,0.2,1) forwards' : 'popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-        }}>
-
-          {/* Header */}
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(37,211,102,0.12)',
-              border: '1px solid rgba(37,211,102,0.25)',
-              padding: '5px 14px', borderRadius: 20, marginBottom: 14,
-            }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#25D366' }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#25D366' }}>WhatsApp</span>
-            </div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff' }}>
-              Подключение к боту
-            </h2>
-          </div>
-
-          {/* Content */}
-          {!status && (
-            <Loader size={36} color="#A78BFA" style={{ animation: 'spin 1s linear infinite' }} />
-          )}
-
-          {status?.error && (
-            <div style={{ textAlign: 'center' }}>
-              <WifiOff size={40} color="#F87171" style={{ marginBottom: 12 }} />
-              <p style={{ color: '#F87171', fontWeight: 700, margin: 0 }}>wa-bot недоступен</p>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 6 }}>
-                Запустите <code style={{ color: '#A78BFA' }}>bash run.sh</code>
-              </p>
-            </div>
-          )}
-
-          {status && !status.error && status.isReady && (
-            <div style={{ textAlign: 'center' }}>
-              <CheckCircle size={52} color="#22C55E" style={{ marginBottom: 8 }} />
-              <p style={{ color: '#22C55E', fontWeight: 800, fontSize: 17, margin: 0 }}>
-                WhatsApp подключён ✅
-              </p>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 6 }}>
-                Переходим в дашборд...
-              </p>
-            </div>
-          )}
-
-          {status && !status.error && !status.isReady && !status.qr && (
-            <div style={{ textAlign: 'center' }}>
-              <Loader size={36} color="#FBBF24" style={{ animation: 'spin 1s linear infinite', marginBottom: 10 }} />
-              <p style={{ color: '#FBBF24', fontWeight: 700, margin: 0 }}>Инициализация...</p>
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 6 }}>QR-код появится автоматически</p>
-            </div>
-          )}
-
-          {status && !status.error && !status.isReady && status.qr && (
-            <>
-              <div style={{ textAlign: 'center' }}>
-                <Smartphone size={22} color="#A78BFA" style={{ marginBottom: 6 }} />
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, margin: 0 }}>
-                  WhatsApp → Связанные устройства → Привязать устройство
-                </p>
-              </div>
-              <div style={{
-                padding: 18, background: '#fff', borderRadius: 16,
-                boxShadow: '0 0 0 6px rgba(167,139,250,0.15)',
-              }}>
-                <QRCodeSVG value={status.qr} size={210} level="M" includeMargin={false} />
-              </div>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textAlign: 'center', margin: 0 }}>
-                Обновляется каждые 3 сек
-              </p>
-            </>
-          )}
-
-          {/* Skip / close */}
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.4)', borderRadius: 10,
-              padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
-          >
-            Пропустить →
-          </button>
+    <div className="video-border" style={{ ['--c1' as string]: c1, ['--c2' as string]: c2 }}>
+      <div className="video-wrap" style={{ ['--c1-alpha' as string]: c1 + '12' }}>
+        <div className="video-play">
+          <Play size={22} color="#64748B" fill="#64748B" style={{ marginLeft: 2 }} />
         </div>
+        <span className="video-label">{label}</span>
+        <span className="video-tag">Видео записано в Focusee</span>
       </div>
-
-      <style>{`
-        @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes popIn   { from { opacity: 0; transform: scale(0.88) translateY(20px) } to { opacity: 1; transform: scale(1) translateY(0) } }
-        @keyframes slideUp { from { opacity: 1; transform: translateY(0) } to { opacity: 0; transform: translateY(-120px) } }
-        @keyframes spin    { to { transform: rotate(360deg) } }
-      `}</style>
-    </>
+    </div>
   )
 }
 
-// ── Landing Page ──────────────────────────────────────────────────────────────
-export default function LandingPage() {
-  const router = useRouter()
-  const [typed, setTyped] = useState('')
-  const [showQR, setShowQR] = useState(false)
-
-  const messages = [
-    '1А — 25 детей, 2 болеют',
-    'Болат заболел → найти замену',
-    'Подготовить актовый зал в пятницу',
-    'Сколько часов норма для 3 класса?',
+/* ─── FAQ (изолирован) ─── */
+const FaqSection = memo(function FaqSection() {
+  const [open, setOpen] = useState<number | null>(null)
+  const items = [
+    { q: 'Нужно ли устанавливать новые приложения?', a: 'Нет. Учителя и персонал продолжают использовать WhatsApp как обычно. ИИ читает сообщения групп в фоне. Директор работает через веб-дашборд.' },
+    { q: 'Насколько точно работает подбор замены?', a: 'Система читает загруженный Excel-файл расписания и нагрузки напрямую. Она находит свободных педагогов на нужный урок и проверяет соответствие нормам нагрузки по Приказу МОН №130.' },
+    { q: 'Какие нормативные документы загружены в систему?', a: 'Приказ МОН РК №76 (квалификационные требования), Приказ №130 (правила расписания, длительность урока, минимальная перемена), Приказ МЗ №110 (санитарные нормы СанПиН).' },
+    { q: 'Безопасны ли данные учеников и сотрудников?', a: 'Все данные хранятся в собственном экземпляре Supabase школы. До NVIDIA NIM доходит только текст запроса. Данные об учениках и персонале не покидают инфраструктуру школы.' },
+    { q: 'Поддерживает ли система голосовые сообщения директора?', a: 'Да. Виджет директора принимает голосовые записи. Gemma 3n транскрибирует аудио и преобразует речь в структурированные задачи с исполнителями и дедлайнами.' },
   ]
-
-  useEffect(() => {
-    let msgIdx = 0, charIdx = 0, deleting = false
-    const iv = setInterval(() => {
-      const msg = messages[msgIdx]
-      if (!deleting) {
-        setTyped(msg.slice(0, charIdx + 1)); charIdx++
-        if (charIdx >= msg.length) deleting = true
-      } else {
-        setTyped(msg.slice(0, charIdx - 1)); charIdx--
-        if (charIdx <= 0) { deleting = false; msgIdx = (msgIdx + 1) % messages.length }
-      }
-    }, 60)
-    return () => clearInterval(iv)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const [checking, setChecking] = useState(false)
-
-  const openDashboard = async () => {
-    setChecking(true)
-    try {
-      const res = await fetch('/api/whatsapp', { cache: 'no-store' })
-      const data: WAStatus = await res.json()
-      if (data.isReady) {
-        // Already logged in — go directly to dashboard
-        router.push('/dashboard')
-        return
-      }
-    } catch {
-      // wa-bot unreachable — still show modal so user can see the error
-    } finally {
-      setChecking(false)
-    }
-    setShowQR(true)
-  }
-  const onReady = () => { setShowQR(false); router.push('/dashboard') }
-  const skip   = () => { setShowQR(false); router.push('/dashboard') }
-
-  const btnStyle: React.CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', gap: 8,
-    background: 'linear-gradient(135deg, #3B82F6, #7C3AED)',
-    color: '#fff', padding: '13px 28px', borderRadius: 12,
-    fontSize: 15, fontWeight: 700, textDecoration: 'none',
-    boxShadow: '0 4px 24px rgba(59,130,246,0.4)',
-    border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-    transition: 'all 0.2s',
-  }
-
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0F1E', fontFamily: "'Figtree', sans-serif", color: '#fff' }}>
-
-      {showQR && <QRModal onClose={skip} onReady={onReady} />}
-
-      {/* ── NAV ── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
-        background: 'rgba(10,15,30,0.85)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        padding: '0 40px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        height: 64,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 38, height: 38,
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-            borderRadius: 11,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(59,130,246,0.4)',
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 800, lineHeight: 1.1 }}>Aqbobek AI</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Director Platform</div>
-          </div>
+    <section id="faq" className="section">
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <div className="section-label">FAQ</div>
+          <h2 className="section-title" style={{ marginTop: 12 }}>Частые вопросы</h2>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '5px 12px', borderRadius: 20 }}>
-            <span style={{ width: 7, height: 7, background: '#10B981', borderRadius: '50%', display: 'inline-block' }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#10B981' }}>Live Demo</span>
+        {items.map((f, i) => (
+          <div key={i} className="faq-item">
+            <div className="faq-q" onClick={() => setOpen(open === i ? null : i)} role="button">
+              {f.q}
+              <ChevronDown size={16} color="#475569" style={{ transform: open === i ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }} />
+            </div>
+            {open === i && <p className="faq-a">{f.a}</p>}
           </div>
-          <button onClick={openDashboard} disabled={checking} style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-            color: '#fff', padding: '8px 18px', borderRadius: 10,
-            fontSize: 14, fontWeight: 700, border: 'none', cursor: checking ? 'wait' : 'pointer',
-            boxShadow: '0 2px 12px rgba(59,130,246,0.35)',
-            opacity: checking ? 0.7 : 1,
-          }}>
-            {checking ? '...' : <><span>Открыть дашборд</span> <ArrowRight size={14} /></>}
-          </button>
+        ))}
+      </div>
+    </section>
+  )
+})
+
+/* ─── Данные фич ─── */
+const FEATURES = [
+  {
+    num: '01', title: 'ИИ-роутер сообщений', reverse: false,
+    subtitle: 'Сообщение в WhatsApp становится структурированными данными за 2 секунды',
+    desc: 'Учителя и персонал пишут в привычной группе WhatsApp. ИИ читает каждое сообщение и автоматически определяет смысл — замена, посещаемость, инцидент, задача или нормативный вопрос.',
+    bullets: ['Классификация намерений: ключевые слова + LLM', 'Обрабатывает текст и голосовые сообщения', 'Не нужны новые приложения — все работают в WhatsApp'],
+    videoLabel: 'Демо: роутер сообщений', c1: '#6366F1', c2: '#06B6D4',
+  },
+  {
+    num: '02', title: 'Голос в задачи', reverse: true,
+    subtitle: 'Продиктуйте. ИИ сделает всё остальное.',
+    desc: 'Директор записывает голосовое сообщение. Gemma 3n транскрибирует и разбивает его на отдельные задачи с исполнителями из базы сотрудников, дедлайнами и приоритетами.',
+    bullets: ['Транскрипция аудио через Gemma 3n', 'Извлекает несколько задач из одного сообщения', 'Автоматические уведомления исполнителям в WhatsApp'],
+    videoLabel: 'Демо: голос → задача', c1: '#8B5CF6', c2: '#EC4899',
+  },
+  {
+    num: '03', title: 'Умная замена', reverse: false,
+    subtitle: 'Отсутствующий учитель заменён менее чем за 5 секунд',
+    desc: 'Система сопоставляет расписание в реальном времени с Excel-файлами нагрузки, чтобы найти оптимального заменителя. Проверяет конфликты уроков, лимиты нагрузки и автоматически уведомляет все стороны.',
+    bullets: ['Проверяет Excel-расписание в реальном времени', 'Валидирует нормы нагрузки педагога', 'Одно нажатие для утверждения директором'],
+    videoLabel: 'Демо: умная замена', c1: '#06B6D4', c2: '#6366F1',
+  },
+  {
+    num: '04', title: 'Сбор посещаемости', reverse: true,
+    subtitle: 'Общешкольная посещаемость из сырых сообщений WhatsApp',
+    desc: 'Учителя пишут простые сообщения: «1А: 24 присутствует, 1 отсутствует». NLP-парсер извлекает числа, агрегирует итоги и обновляет счёт питания — без форм и Excel.',
+    bullets: ['Парсит любой формат сообщения о посещаемости', 'Общешкольные итоги в реальном времени', 'Автоматический подсчёт порций питания'],
+    videoLabel: 'Демо: сбор посещаемости', c1: '#10B981', c2: '#06B6D4',
+  },
+  {
+    num: '05', title: 'Трекинг инцидентов', reverse: false,
+    subtitle: 'Сообщите о проблеме — смотрите как она назначается',
+    desc: '«Сломался проектор в 304 кабинете» — создаёт отслеживаемый тикет, назначает ответственный отдел, выставляет приоритет и отправляет уведомление в WhatsApp.',
+    bullets: ['Определяет 20+ категорий инцидентов из речи', 'Автоматически назначает ответственный отдел', 'Статус отслеживается до разрешения'],
+    videoLabel: 'Демо: трекинг инцидентов', c1: '#EF4444', c2: '#F59E0B',
+  },
+  {
+    num: '06', title: 'RAG по нормативам', reverse: true,
+    subtitle: 'Задайте вопрос о приказах МОН — получите ответ со ссылкой',
+    desc: 'Поисковый движок по Приказам МОН РК №76, №110 и №130. Каждый ответ основан на извлечённых фрагментах документов — без галлюцинаций, с верифицируемой цитатой.',
+    bullets: ['Приказы №76 (квалификации), №130 (расписание), №110 (СанПиН)', 'FAISS-индекс для семантического поиска', 'Проверка соответствия перед утверждением'],
+    videoLabel: 'Демо: RAG по нормативам', c1: '#F59E0B', c2: '#EF4444',
+  },
+]
+
+const TECH = [
+  { name: 'Llama 3.1 Nemotron', role: 'Основная LLM', icon: Brain, color: '#6366F1' },
+  { name: 'Gemma 3n', role: 'Голос / Аудио', icon: Mic, color: '#8B5CF6' },
+  { name: 'FAISS + RAG', role: 'Поиск по документам', icon: FileText, color: '#10B981' },
+  { name: 'NVIDIA NIM', role: 'Inference API', icon: Cpu, color: '#06B6D4' },
+  { name: 'Supabase', role: 'База данных', icon: Database, color: '#F59E0B' },
+  { name: 'FastAPI', role: 'Серверная часть', icon: Bot, color: '#EF4444' },
+]
+
+/* ─── СТРАНИЦА ─── */
+export default function LandingPage() {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: STYLE }} />
+
+      {/* Навигация */}
+      <nav className="nav">
+        <Link href="/" className="nav-logo">
+          <div className="nav-logo-box"><Bot size={16} color="#fff" /></div>
+          <span className="nav-logo-text">Aqbobek <span style={{ color: '#818CF8' }}>AI</span></span>
+        </Link>
+        <div className="nav-links">
+          <a href="#features" className="nav-link">Возможности</a>
+          <a href="#tech" className="nav-link">Технологии</a>
+          <a href="#faq" className="nav-link">FAQ</a>
         </div>
+        <Link href="/dashboard" className="nav-cta">
+          Открыть дашборд <ArrowRight size={14} />
+        </Link>
       </nav>
 
-      {/* ── HERO ── */}
-      <section style={{
-        minHeight: '100vh',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '100px 40px 80px',
-        position: 'relative', overflow: 'hidden', textAlign: 'center',
-      }}>
-        <div style={{ position: 'absolute', top: '10%', left: '5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '20%', right: '5%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)',
-          padding: '7px 18px', borderRadius: 20, marginBottom: 28,
-          animation: 'fadeUp 0.5s ease forwards',
-        }}>
-          <Sparkles size={13} color="#60A5FA" />
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#60A5FA' }}>AIS Hack 3.0 · EdTech &amp; AI Management</span>
+      {/* Герой */}
+      <section className="hero">
+        <div className="hero-glow" />
+        <div className="hero-badge">
+          <Bot size={12} /> AIS Hack 3.0 — EdTech &amp; AI Management
         </div>
-
-        <h1 style={{
-          fontSize: 'clamp(36px, 6vw, 76px)', fontWeight: 900,
-          lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24,
-          animation: 'fadeUp 0.6s ease 0.1s both',
-        }}>
-          AI-Директор для{' '}
-          <span style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            школы будущего
-          </span>
+        <h1 className="hero-h1">
+          Ваша школа,<br /><span>управляется ИИ</span>
         </h1>
-
-        <p style={{
-          fontSize: 18, color: 'rgba(255,255,255,0.55)', maxWidth: 580, lineHeight: 1.7,
-          marginBottom: 36, fontWeight: 400, animation: 'fadeUp 0.6s ease 0.2s both',
-        }}>
-          Автоматизируем посещаемость, замены, задачи и документооборот. Директор концентрируется на педагогике — рутину берёт AI.
+        <p className="hero-sub">
+          Один ИИ-агент управляет посещаемостью, заменами, инцидентами, делегированием задач и проверкой нормативов — всё запускается из сообщения в WhatsApp.
         </p>
+        <div className="hero-btns">
+          <Link href="/dashboard" className="btn-primary">
+            Открыть дашборд <ArrowRight size={15} />
+          </Link>
+          <a href="#features" className="btn-ghost">
+            Как это работает
+          </a>
+        </div>
+      </section>
 
-        {/* Typewriter */}
-        <div style={{
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 14, padding: '14px 22px', marginBottom: 36, maxWidth: 440, width: '100%',
-          display: 'flex', alignItems: 'center', gap: 12, animation: 'fadeUp 0.6s ease 0.3s both',
-        }}>
-          <MessageCircle size={16} color="#60A5FA" style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
-            {typed}<span style={{ borderRight: '2px solid #60A5FA', marginLeft: 1 }} />
-          </span>
+      {/* Статистика */}
+      <div className="stats-bar">
+        {[
+          { val: '400+', label: 'Учеников под наблюдением' },
+          { val: '20',   label: 'Педагогов и сотрудников' },
+          { val: '<3 с', label: 'Время ответа ИИ' },
+          { val: '3',    label: 'Приказа МОН проиндексировано' },
+        ].map(({ val, label }) => (
+          <div key={label} className="stat">
+            <span className="stat-val">{val}</span>
+            <span className="stat-label">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Возможности */}
+      <section id="features" className="section">
+        <div style={{ textAlign: 'center', marginBottom: 80 }}>
+          <div className="section-label"><Bot size={12} /> Возможности</div>
+          <h2 className="section-title" style={{ maxWidth: 600, margin: '12px auto 10px' }}>
+            Трансформируйте управление школой с этими инструментами
+          </h2>
         </div>
 
-        {/* CTA — single button only */}
-        <div style={{ animation: 'fadeUp 0.6s ease 0.4s both' }}>
-          <button onClick={openDashboard} style={btnStyle}>
-            <Layers size={16} />
-            Открыть дашборд
-            <ArrowRight size={15} />
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: 40, marginTop: 72, flexWrap: 'wrap', justifyContent: 'center', animation: 'fadeUp 0.6s ease 0.5s both' }}>
-          {stats.map((s) => (
-            <div key={s.label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #fff, rgba(255,255,255,0.6))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                {s.value}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 120 }}>
+          {FEATURES.map(({ num, title, subtitle, desc, bullets, videoLabel, c1, c2, reverse }) => (
+            <div key={num} className={`feature-row${reverse ? ' reverse' : ''}`}>
+              <div className="feature-text">
+                <div className="feature-num">Модуль {num}</div>
+                <h3 className="feature-h">{title}</h3>
+                <p style={{ fontSize: 13, color: '#6366F1', fontWeight: 600, marginBottom: 8 }}>{subtitle}</p>
+                <p className="feature-p">{desc}</p>
+                <ul className="feature-list">
+                  {bullets.map(b => (
+                    <li key={b}><CheckCircle2 size={14} color="#6366F1" />{b}</li>
+                  ))}
+                </ul>
               </div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {s.label}
-              </div>
+              <VideoPlaceholder label={videoLabel} c1={c1} c2={c2} />
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
-      <section style={{ padding: '100px 40px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', padding: '6px 18px', borderRadius: 20, marginBottom: 20 }}>
-              <Sparkles size={13} color="#A78BFA" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#A78BFA' }}>4 ключевых модуля</span>
-            </div>
-            <h2 style={{ fontSize: 'clamp(28px,4vw,48px)', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 16 }}>
-              Всё, что нужно директору —<br />
-              <span style={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                в одной платформе
-              </span>
-            </h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-            {features.map((f) => {
-              const Icon = f.icon
-              return (
-                <div key={f.title} style={{
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 18, padding: 28, backdropFilter: 'blur(10px)',
-                  transition: 'all 0.25s ease', cursor: 'default',
-                }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.background = 'rgba(255,255,255,0.06)'; el.style.borderColor = f.color + '44'; el.style.transform = 'translateY(-4px)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.background = 'rgba(255,255,255,0.03)'; el.style.borderColor = 'rgba(255,255,255,0.08)'; el.style.transform = 'translateY(0)' }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 16, background: f.bg, border: `1px solid ${f.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                    <Icon size={24} color={f.color} />
-                  </div>
-                  <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 10 }}>{f.title}</h3>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+      {/* Технологии */}
+      <section id="tech" className="section section-alt" style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+        <div style={{ maxWidth: 1140, margin: '0 auto', textAlign: 'center' }}>
+          <div className="section-label"><Cpu size={12} /> ИИ-модели и стек</div>
+          <h2 className="section-title" style={{ marginTop: 12, marginBottom: 10 }}>Работает на передовых моделях</h2>
+          <p className="section-sub" style={{ maxWidth: 480, margin: '0 auto' }}>
+            Весь инференс проходит через NVIDIA NIM API — быстро, надёжно, менее 3 секунд.
+          </p>
+          <div className="tech-grid">
+            {TECH.map(({ name, role, icon: Icon, color }) => (
+              <div key={name} className="tech-card">
+                <div className="tech-icon" style={{ background: color + '18' }}>
+                  <Icon size={18} color={color} />
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── MODULES GRID ── */}
-      <section style={{ padding: '80px 40px', background: 'rgba(255,255,255,0.02)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 50 }}>
-            <h2 style={{ fontSize: 36, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 12 }}>Быстрый доступ</h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 16 }}>Перейдите в любой модуль прямо сейчас</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-            {modules.map((m) => {
-              const Icon = m.icon
-              return (
-                <a key={m.href} href={m.href} style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 14, padding: '20px 22px', textDecoration: 'none', color: '#fff',
-                  transition: 'all 0.2s ease', fontWeight: 600, fontSize: 15,
-                }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.background = 'rgba(255,255,255,0.07)'; el.style.borderColor = m.color + '55'; el.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLAnchorElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'rgba(255,255,255,0.08)'; el.style.transform = 'translateY(0)' }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 12, background: m.color + '20', border: `1px solid ${m.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={20} color={m.color} />
-                  </div>
-                  <span>{m.label}</span>
-                  <ChevronRight size={16} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto' }} />
-                </a>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TECH STACK ── */}
-      <section style={{ padding: '100px 40px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 18px', borderRadius: 20, marginBottom: 24 }}>
-            <Brain size={13} color="#34D399" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#34D399' }}>AI Stack</span>
-          </div>
-          <h2 style={{ fontSize: 36, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 16 }}>
-            Powered by лучшими AI-технологиями
-          </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 40 }}>
-            {techStack.map((t) => (
-              <div key={t.name} style={{
-                background: 'rgba(255,255,255,0.04)', border: `1px solid ${t.color}33`,
-                borderRadius: 12, padding: '14px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 120,
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, marginBottom: 4 }} />
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{t.name}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.role}</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>{name}</div>
+                  <div style={{ fontSize: 12, color: '#475569' }}>{role}</div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section style={{ padding: '80px 40px' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15))',
-            border: '1px solid rgba(59,130,246,0.25)',
-            borderRadius: 24, padding: '60px 40px', textAlign: 'center',
-            backdropFilter: 'blur(20px)',
-          }}>
-            <div style={{ width: 70, height: 70, borderRadius: 20, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 8px 32px rgba(59,130,246,0.4)' }}>
-              <Shield size={32} color="white" />
-            </div>
-            <h2 style={{ fontSize: 36, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 16 }}>Готовы к демонстрации</h2>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: 32 }}>
-              Все модули задеплоены и работают в реальном времени.
-            </p>
-            <button onClick={openDashboard} style={{ ...btnStyle, padding: '14px 32px', fontSize: 16 }}>
-              Открыть дашборд <ArrowRight size={16} />
-            </button>
-            <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 28, flexWrap: 'wrap' }}>
-              {['NLP-парсер', 'Voice-to-Task', 'Smart замены', 'RAG-приказы'].map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <CheckCircle2 size={14} color="#10B981" />
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{f}</span>
-                </div>
-              ))}
+          <div style={{ marginTop: 40, padding: '22px 28px', borderRadius: 14, background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', gap: 14, alignItems: 'flex-start', textAlign: 'left' }}>
+            <Shield size={20} color="#6366F1" style={{ marginTop: 2, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#C7D2FE', marginBottom: 4 }}>Архитектура на основе нормативов</div>
+              <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7 }}>
+                Каждая задача и замена автоматически проверяется на соответствие Приказам МОН РК №76, №110 и №130 через RAG-пайплайн до утверждения директором.
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '30px 40px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-            </svg>
+      {/* FAQ */}
+      <FaqSection />
+
+      {/* CTA */}
+      <section className="section section-alt" style={{ borderTop: '1px solid rgba(255,255,255,.07)', textAlign: 'center' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto' }}>
+          <div style={{ width: 60, height: 60, borderRadius: 16, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 0 40px rgba(99,102,241,.5)' }}>
+            <Bot size={28} color="#fff" />
           </div>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>Aqbobek AI Director</span>
+          <h2 className="section-title">Познакомьтесь с вашим ИИ-директором</h2>
+          <p className="section-sub" style={{ margin: '12px auto 36px', maxWidth: 420 }}>
+            Дашборд уже работает. Откройте его, запишите голосовое сообщение и смотрите, как система делает всё остальное.
+          </p>
+          <Link href="/dashboard" className="btn-primary" style={{ display: 'inline-flex', justifyContent: 'center' }}>
+            Открыть дашборд <ArrowRight size={16} />
+          </Link>
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>
-          AIS Hack 3.0 · EdTech &amp; AI Management · Начальная школа образовательного комплекса «Aqbobek»
-        </p>
+      </section>
+
+      {/* Футер */}
+      <footer className="footer">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: '#6366F1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Bot size={13} color="#fff" />
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Aqbobek AI Director</span>
+        </div>
+        <span style={{ fontSize: 12, color: '#334155' }}>AIS Hack 3.0 — Трек EdTech &amp; AI Management</span>
+        <div style={{ display: 'flex', gap: 20 }}>
+          <a href="#features" style={{ fontSize: 12, color: '#334155', textDecoration: 'none' }}>Возможности</a>
+          <a href="#tech" style={{ fontSize: 12, color: '#334155', textDecoration: 'none' }}>Технологии</a>
+          <a href="#faq" style={{ fontSize: 12, color: '#334155', textDecoration: 'none' }}>FAQ</a>
+        </div>
       </footer>
-
-      <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-      `}</style>
-    </div>
+    </>
   )
 }

@@ -1,7 +1,7 @@
 """
 api/llm.py
 ==========
-Модуль для работы с DeepSeek-v3.2 через NVIDIA NIM API.
+Модуль для работы с LLM через NVIDIA NIM API.
 Используется для:
   - Парсинга посещаемости из сырых сообщений
   - Извлечения инцидентов
@@ -10,6 +10,7 @@ api/llm.py
 """
 import os
 import json
+import re
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -20,32 +21,34 @@ client = OpenAI(
     api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 
-MODEL = "meta/llama-3.3-70b-instruct"
+MODEL = "nvidia/llama-3.1-nemotron-nano-8b-v1"
 
 
 def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: str = None) -> str:
     """
     Базовый вызов LLM. Возвращает текстовый ответ.
     """
-    completion = client.chat.completions.create(
-        model=model or MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.2,
-        top_p=0.95,
-        max_tokens=max_tokens,
-        stream=True,
-    )
-    result = []
-    for chunk in completion:
-        if not getattr(chunk, "choices", None):
-            continue
-        delta = chunk.choices[0].delta
-        if delta.content:
-            result.append(delta.content)
-    return "".join(result)
+    try:
+        completion = client.chat.completions.create(
+            model=model or MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.2,
+            top_p=0.95,
+            max_tokens=max_tokens,
+            stream=False,
+            timeout=12.0
+        )
+        raw = completion.choices[0].message.content or ""
+        # Remove deep thinking tags
+        raw = re.sub(r'<thought>.*?</thought>', '', raw, flags=re.DOTALL)
+        raw = re.sub(r'<thinking>.*?</thinking>', '', raw, flags=re.DOTALL)
+        return raw.strip()
+    except Exception as e:
+        print(f"[LLM] Error in chat: {e}")
+        return "Ошибка обработки запроса (таймаут или сбой)."
 
 
 def chat_json(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: str = None) -> dict:
@@ -78,7 +81,6 @@ def chat_json(system_prompt: str, user_prompt: str, max_tokens: int = 1024, mode
         return json.loads(raw)
     except json.JSONDecodeError as e:
         # Последняя попытка: убрать всё кроме JSON
-        import re
         match = re.search(r"(\{.*\})", raw, re.DOTALL)
         if match:
             try:
