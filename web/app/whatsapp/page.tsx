@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
 import { Smartphone, CheckCircle, Loader, WifiOff, RefreshCw } from 'lucide-react'
 
 type WAStatus = { isReady: boolean; qr: string | null; error?: string }
@@ -117,17 +116,20 @@ export default function WhatsAppPage() {
               </p>
             </div>
 
+            {/* Native QR display using an img tag with a QR API */}
             <div style={{
               padding: 20,
               background: '#fff',
               borderRadius: 16,
               boxShadow: '0 0 0 6px rgba(167,139,250,0.15)',
             }}>
-              <QRCodeSVG
-                value={status.qr}
-                size={220}
-                level="M"
-                includeMargin={false}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(status.qr)}`}
+                alt="WhatsApp QR Code"
+                width={220}
+                height={220}
+                style={{ display: 'block' }}
               />
             </div>
 

@@ -7,11 +7,8 @@ import {
   AlertTriangle,
   CalendarDays,
   BookOpen,
-  MessageCircle,
   UserCircle,
-  Bot,
   Sparkles,
-  QrCode,
 } from 'lucide-react'
 
 const nav = [
@@ -21,7 +18,6 @@ const nav = [
   { href: '/schedule',    label: 'Расписание',     icon: CalendarDays    },
   { href: '/rag',         label: 'Приказы и RAG',  icon: BookOpen        },
   { href: '/employees',   label: 'Сотрудники',     icon: UserCircle      },
-  { href: '/whatsapp',    label: 'WhatsApp',       icon: QrCode          },
 ]
 
 export default function Sidebar() {

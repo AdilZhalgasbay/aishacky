@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import {
   Bot, Zap, BookOpen, CalendarDays, Users, AlertTriangle,
-  MessageCircle, Sparkles, ArrowRight, CheckCircle2, Shield,
-  TrendingUp, Clock, Star, ChevronRight, Play, Globe,
+  Sparkles, ArrowRight, CheckCircle2, Shield,
+  TrendingUp, Clock, Star, ChevronRight, Globe,
   BarChart3, Brain, Layers, Award,
 } from 'lucide-react'
 
@@ -60,7 +60,6 @@ const modules = [
   { icon: AlertTriangle, label: 'Инциденты',    href: '/incidents',  color: '#EF4444' },
   { icon: CalendarDays,  label: 'Расписание',   href: '/schedule',   color: '#3B82F6' },
   { icon: BookOpen,      label: 'RAG Приказы',  href: '/rag',        color: '#F59E0B' },
-  { icon: MessageCircle, label: 'Telegram',     href: '/telegram',   color: '#8B5CF6' },
   { icon: BarChart3,     label: 'Аналитика',    href: '/dashboard',  color: '#06B6D4' },
 ]
 
@@ -218,7 +217,7 @@ export default function LandingPage() {
           display: 'flex', alignItems: 'center', gap: 12,
           animation: 'fadeUp 0.6s ease 0.3s both',
         }}>
-          <MessageCircle size={16} color="#60A5FA" style={{ flexShrink: 0 }} />
+          <Bot size={16} color="#60A5FA" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
             {typed}<span style={{ opacity: Math.sin(Date.now() / 300) > 0 ? 1 : 0, borderRight: '2px solid #60A5FA', marginLeft: 1 }} />
           </span>
@@ -238,18 +237,7 @@ export default function LandingPage() {
             Открыть дашборд
             <ArrowRight size={15} />
           </Link>
-          <Link href="/telegram" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            color: 'rgba(255,255,255,0.8)',
-            padding: '13px 24px', borderRadius: 12,
-            fontSize: 15, fontWeight: 600, textDecoration: 'none',
-            transition: 'all 0.2s',
-          }}>
-            <Play size={14} />
-            Демо Telegram
-          </Link>
+
         </div>
 
         {/* Stats row */}
