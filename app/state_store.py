@@ -198,8 +198,30 @@ def _subjects_from_value(value: Any) -> list[str]:
 def _normalize_class_name(name: str | None) -> str | None:
     if not name:
         return None
-    translation = str.maketrans("АВСЕКМНОРТХавсекмнортх", "ABCEKMHOPTXabcekmhoptx")
-    normalized = str(name).strip().upper().translate(translation)
+    
+    # 1. Сначала приводим к верхнему регистру и убираем пробелы
+    name = str(name).strip().upper()
+    
+    # 2. Маппинг кириллических букв разделов в латиницу по порядку (А=A, Б=B, В=C, Г=D)
+    # Это решает проблему когда учителя пишут "9Б", а в базе "9B"
+    section_map = {
+        "А": "A",
+        "Б": "B",
+        "В": "C",
+        "Г": "D",
+        "Д": "E",
+    }
+    
+    # Заменяем только последнюю букву если это кириллица из списка
+    prefix = name[:-1]
+    suffix = name[-1]
+    if suffix in section_map:
+        name = prefix + section_map[suffix]
+    
+    # 3. Общий маппинг гомоглифов на всякий случай (А->A, В->B и т.д.)
+    homoglyphs = str.maketrans("АВСЕКМНОРТХавсекмнортх", "ABCEKMHOPTXabcekmhoptx")
+    normalized = name.translate(homoglyphs)
+    
     return normalized
 
 
