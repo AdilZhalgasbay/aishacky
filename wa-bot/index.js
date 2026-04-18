@@ -14,15 +14,18 @@ const client = new Client({
 });
 
 let isClientReady = false;
+let latestQR = null;          // raw QR string for web UI
 const messageCache = []; // Store messages in RAM
 
 client.on('qr', (qr) => {
+    latestQR = qr;
     qrcode.generate(qr, { small: true });
     console.log('\n[wa-bot] 📱 Отсканируйте этот QR-код в WhatsApp\n');
 });
 
 client.on('ready', () => {
     isClientReady = true;
+    latestQR = null; // Clear QR once authenticated
     console.log('[wa-bot] ✅ WhatsApp Client is ready!');
 });
 
@@ -95,6 +98,10 @@ app.get('/chats', async (req, res) => {
     } catch(e) {
         res.status(500).json({error: e.message});
     }
+});
+
+app.get('/status', (req, res) => {
+    res.json({ isReady: isClientReady, qr: latestQR });
 });
 
 app.listen(3001, () => {

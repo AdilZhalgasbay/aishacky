@@ -11,15 +11,17 @@ import {
   UserCircle,
   Bot,
   Sparkles,
+  QrCode,
 } from 'lucide-react'
 
 const nav = [
-  { href: '/dashboard',           label: 'Дашборд',          icon: LayoutDashboard },
-  { href: '/attendance', label: 'Посещаемость',      icon: Users           },
-  { href: '/incidents',  label: 'Инциденты',         icon: AlertTriangle   },
-  { href: '/schedule',   label: 'Расписание',        icon: CalendarDays    },
-  { href: '/rag',        label: 'Приказы и RAG',     icon: BookOpen        },
-  { href: '/employees',  label: 'Сотрудники',        icon: UserCircle      },
+  { href: '/dashboard',   label: 'Дашборд',       icon: LayoutDashboard },
+  { href: '/attendance',  label: 'Посещаемость',   icon: Users           },
+  { href: '/incidents',   label: 'Инциденты',      icon: AlertTriangle   },
+  { href: '/schedule',    label: 'Расписание',     icon: CalendarDays    },
+  { href: '/rag',         label: 'Приказы и RAG',  icon: BookOpen        },
+  { href: '/employees',   label: 'Сотрудники',     icon: UserCircle      },
+  { href: '/whatsapp',    label: 'WhatsApp',       icon: QrCode          },
 ]
 
 export default function Sidebar() {
