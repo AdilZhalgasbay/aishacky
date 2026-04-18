@@ -18,6 +18,12 @@ router = APIRouter(prefix="/schedule", tags=["schedule"])
 WEEKDAY_MAP = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 
 
+class AbsenceData(BaseModel):
+    absent_teacher_name: str | None
+    reason: str | None  # болезнь, командировка, отпуск, семейные обстоятельства, курсы
+    dates: list[str] | None
+
+
 class SubstituteRequest(BaseModel):
     message: str | None = None
     absent_teacher_name: str | None = None
@@ -166,18 +172,13 @@ def _teacher_lessons_for_day(
     weekday: str,
     schedule_rows: list[dict],
 ) -> list[dict]:
-    exact_rows = [
+    """Находит уроки учителя на конкретный день недели."""
+    day_lessons = [
         row
         for row in schedule_rows
         if row.get("teacher") == teacher_name and row.get("day") == weekday
     ]
-    if exact_rows:
-        return sorted(exact_rows, key=lambda row: int(row.get("lesson") or 0))
-
-    fallback_rows = [
-        row for row in schedule_rows if row.get("teacher") == teacher_name
-    ]
-    return sorted(fallback_rows, key=lambda row: (row.get("day") or "", int(row.get("lesson") or 0)))
+    return sorted(day_lessons, key=lambda row: int(row.get("lesson") or 0))
 
 
 def _fallback_class_name(index: int) -> str:
@@ -355,7 +356,7 @@ def find_substitute(req: SubstituteRequest):
         "substitutions_created": len(substitutions),
         "substitutions": substitutions,
         "conflict_free": all(
-            sub.get("status") == "confirmed"
+            sub.get("status") in ["confirmed", "pending_acceptance"]
             and not _teacher_busy_in_schedule(
                 sub["substitute_name"],
                 weekday=weekday,
@@ -366,3 +367,147 @@ def find_substitute(req: SubstituteRequest):
             if sub.get("substitute_name")
         ),
     }
+
+
+def parse_absence_from_text(text: str) -> AbsenceData:
+    now = datetime.now()
+    current_date = now.strftime("%Y-%m-%d")
+    weekday = WEEKDAY_MAP[now.weekday()]
+    
+    prompt = f"""
+Твоя задача: анализировать входящие сообщения от учителей и извлекать данные об отсутствии.
+Сегодня: {current_date} ({weekday}).
+Если в сообщении указан день недели (например "в понедельник"), вычисли точную дату исходя из того что сегодня {current_date} ({weekday}).
+
+### ПРАВИЛА КЛАССИФИКАЦИИ ПРИЧИН:
+1. "болезнь" (заболел, справка, плохо себя чувствую).
+2. "командировка" (в школе не буду, конференция, олимпиада).
+3. "отпуск" (отгул, отпуск).
+4. "семейные обстоятельства" (по семейным, дела).
+5. "курсы" (повышение квалификации, курсы).
+
+Верни JSON с полями:
+- absent_teacher_name (строка или null)
+- reason (одна из строк выше)
+- dates (список строк ISO YYYY-MM-DD)
+
+Сообщение: {text}
+"""
+    from api.llm import chat_json
+    data = chat_json("Extract absence details from teacher messages.", prompt, model="meta/llama-3.1-405b-instruct")
+    return AbsenceData(**data)
+
+
+async def process_absence_flow(sender_handle: str | None, text: str, sender_name: str | None = None, chat_id: int | None = None):
+    """
+    Полный цикл: 
+    1. Находим кто пишет.
+    2. Парсим причину и даты.
+    3. Ищем замену.
+    4. Уведомляем замену В ОБЩИЙ ЧАТ.
+    """
+    print(f"[Absence Flow] Processing message from handle={sender_handle}, name={sender_name}, chat_id={chat_id}")
+    from api.telegram import send_message
+
+    # 1. Идентификация учителя
+    teacher = state_store.find_teacher_by_tg_username(sender_handle)
+    if not teacher and chat_id:
+        teacher = state_store.find_teacher_by_chat_id(chat_id)
+    if not teacher and sender_name:
+        teacher = state_store.find_employee_by_name(sender_name)
+
+    if not teacher:
+        if chat_id:
+            send_message(chat_id, "❌ Не удалось определить учителя. Пожалуйста, укажите ваше имя и фамилию в профиле Telegram.")
+        return
+
+    # Авто-привязка chat_id
+    if chat_id and teacher.get("tg_chat_id") != chat_id:
+        state_store.update_employee(teacher["id"], {"tg_chat_id": chat_id})
+
+    # Парсинг сообщения
+    parsed = parse_absence_from_text(text)
+    print(f"[Absence Flow] Parsed LLM: reason={parsed.reason}, dates={parsed.dates}")
+    
+    dates = parsed.dates or [datetime.now().strftime("%Y-%m-%d")]
+    
+    # Реакция в чате
+    if chat_id:
+        dates_str = ", ".join(dates)
+        send_message(chat_id, f"🔍 Ищу замену для учителя *{teacher['name']}* на {dates_str}...")
+
+    for d in dates:
+        req = SubstituteRequest(
+            absent_teacher_name=teacher["name"],
+            reason=parsed.reason,
+            date=d
+        )
+        try:
+            # Ищем замену и передаем chat_id группы для отправки уведомлений туда
+            res = find_substitute_with_status(req, status="pending_acceptance", target_chat_id=chat_id)
+            
+            if res.get("substitutions_created", 0) == 0:
+                if chat_id:
+                    send_message(chat_id, f"✅ У учителя *{teacher['name']}* на {d} нет уроков по расписанию. Замена не требуется.")
+            else:
+                print(f"[Absence Flow] Created {res['substitutions_created']} substitutions for {d}")
+                
+        except Exception as e:
+            print(f"[Absence Flow] Error finding substitute: {e}")
+            if chat_id:
+                # Если 400 ошибка от find_substitute (например "нет доступных учителей")
+                error_msg = str(e)
+                if "400" in error_msg:
+                    send_message(chat_id, f"⚠️ Не удалось найти свободных учителей для замены *{teacher['name']}* на {d}.")
+                else:
+                    send_message(chat_id, f"❌ Произошла ошибка при поиске замены на {d}.")
+
+
+def find_substitute_with_status(req: SubstituteRequest, status: str = "confirmed", target_chat_id: int | None = None):
+    """
+    Обертка над find_substitute для поддержки разных статусов и целевого чата для уведомлений.
+    """
+    import app.routers.schedule as schedule_mod
+    original_notify = schedule_mod.notify_substitution_assignee
+    
+    # Создаем "заплатку" (closure), которая подставляет target_chat_id
+    def patched_notify(sub):
+        # Важно: вызываем оригинальную функцию из notifications, но с нашим chat_id
+        from app.notifications import notify_substitution_assignee as real_notify
+        return real_notify(sub, target_chat_id=target_chat_id)
+    
+    # Подменяем локальную ссылку в этом модуле, чтобы find_substitute вызвал нашу заплатку
+    schedule_mod.notify_substitution_assignee = patched_notify
+    try:
+        print(f"[Patch] Redirecting substitution notifications to chat_id={target_chat_id}")
+        return find_substitute(req)
+    finally:
+        # Возвращаем как было
+        schedule_mod.notify_substitution_assignee = original_notify
+
+
+async def confirm_substitution_by_username(username: str | None, sender_name: str | None = None):
+    """
+    Когда учитель пишет 'Ок', находим его последнюю pending_acceptance замену и подтверждаем.
+    """
+    teacher = state_store.find_teacher_by_tg_username(username)
+    if not teacher and sender_name:
+        teacher = state_store.find_employee_by_name(sender_name)
+        
+    if not teacher:
+        return
+
+    subs = state_store.list_substitutions(status="pending_acceptance")
+    target_subs = [s for s in subs if s.get("substitute_name") == teacher["name"]]
+    
+    if not target_subs:
+        return
+
+    # Подтверждаем все на сегодня
+    today = datetime.now().strftime("%Y-%m-%d")
+    for sub in target_subs:
+        if sub.get("date") == today:
+            sub["status"] = "confirmed"
+            # Сохраняем обратно (нужен метод в state_store)
+            state_store.update_substitution_status(sub["id"], "confirmed")
+            print(f"[Confirm Flow] Confirmed sub {sub['id']} for {teacher['name']}")

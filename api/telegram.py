@@ -74,6 +74,7 @@ def extract_message(update: dict) -> dict | None:
         "chat_id": msg["chat"]["id"],
         "message_id": msg["message_id"],
         "sender": sender,
+        "username": user.get("username"),
         "text": msg["text"],
     }
 

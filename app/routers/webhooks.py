@@ -17,12 +17,11 @@ router = APIRouter(prefix="/webhook", tags=["webhooks"])
 
 @router.post("/telegram")
 async def telegram_webhook(request: Request, background_tasks: BackgroundTasks):
+    print("[TG Webhook] Request received")
     update = await request.json()
     msg = extract_message(update)
     if not msg:
         return {"ok": True}
-
-    print(f"[TG] {msg['sender']}: {msg['text']}")
 
     # Отвечаем Telegram немедленно (200 OK), LLM обрабатываем в фоне
     background_tasks.add_task(_process_tg_message, msg)
@@ -33,12 +32,35 @@ def _process_tg_message(msg: dict):
     """Обрабатывает сообщение в фоне в отдельном потоке."""
     try:
         parsed_type, result = auto_route_message(msg["text"], msg["sender"])
+        print(f"[TG Webhook] Routing result: type={parsed_type} for sender={msg['sender']}")
+
         state_store.append_telegram_message(
             sender_name=msg["sender"],
             message_text=msg["text"],
             parsed_type=parsed_type,
             parsed_data=extract_log_payload(parsed_type, result),
         )
+
+        from app.routers.schedule import process_absence_flow, confirm_substitution_by_username
+        import asyncio
+
+        if parsed_type == "absence":
+            # Запускаем автоматику отсутствия
+            # Передаем username, sender и chat_id для надежности
+            asyncio.run(process_absence_flow(
+                sender_handle=msg.get("username"), 
+                text=msg["text"],
+                sender_name=msg.get("sender"),
+                chat_id=msg.get("chat_id")
+            ))
+        
+        elif parsed_type == "substitution_confirm":
+            # Подтверждаем замену
+            asyncio.run(confirm_substitution_by_username(
+                username=msg.get("username"),
+                sender_name=msg.get("sender")
+            ))
+
         if result:
             summary = format_result(result, msg["sender"])
             if summary:

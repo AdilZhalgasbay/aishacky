@@ -23,12 +23,12 @@ client = OpenAI(
 MODEL = "meta/llama-3.3-70b-instruct"
 
 
-def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> str:
+def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: str = None) -> str:
     """
     Базовый вызов LLM. Возвращает текстовый ответ.
     """
     completion = client.chat.completions.create(
-        model=MODEL,
+        model=model or MODEL,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -48,13 +48,13 @@ def chat(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> str:
     return "".join(result)
 
 
-def chat_json(system_prompt: str, user_prompt: str, max_tokens: int = 1024) -> dict:
+def chat_json(system_prompt: str, user_prompt: str, max_tokens: int = 1024, model: str = None) -> dict:
     """
     Вызов LLM с обязательным JSON-ответом.
     Гарантированно возвращает dict (или кидает ValueError при сбое).
     """
     system_prompt = system_prompt + "\n\nОтвечай ТОЛЬКО валидным JSON без пояснений и markdown."
-    raw = chat(system_prompt, user_prompt, max_tokens)
+    raw = chat(system_prompt, user_prompt, max_tokens, model=model)
     
     # Чистим markdown блоки, если модель всё же добавила ```json ... ```
     raw = raw.strip()
