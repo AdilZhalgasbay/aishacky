@@ -9,3 +9,4 @@ wa-bot/.wwebjs_cache/
 test_*.py
 scratch/*.log
 scratch/test-summary-*.txt
+.env*
