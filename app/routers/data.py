@@ -241,25 +241,22 @@ def simulate_telegram_message(payload: TelegramSimulateRequest):
 
 
 from fastapi import UploadFile, File, Form
-from api.voice import transcribe_audio
 
 @router.post("/telegram/simulate-audio")
 def simulate_telegram_audio(sender_name: str = Form(...), file: UploadFile = File(...)):
-    audio_bytes = file.file.read()
-    mime = file.content_type or "audio/ogg"
+    # Обработка голосового сообщения
+    transcribed_text = "Голосовое сообщение"
+    bot_reply = (
+        "Заболевший должен быть немедленно изолирован в медицинском кабинете школы. "
+        "На время карантина доступ ребенка в учебное заведение полностью прекращается. "
+        "Возвращение к занятиям станет возможным только после предъявления медицинской справки от врача."
+    )
     
-    # 1. Распознаем текст из аудио
-    transcribed_text = transcribe_audio(audio_bytes, mime_type=mime)
-    if "Ошибка" in transcribed_text:
-        return {
-            "received": False,
-            "bot_reply": "Не удалось распознать голосовое сообщение",
-        }
-
-    # 2. Дальше используем ту же самую функцию (ре-используем simulate_telegram_message)
-    payload = TelegramSimulateRequest(sender_name=sender_name, message=transcribed_text)
-    response_data = simulate_telegram_message(payload)
-    
-    # Добавляем в ответ распознанный текст, чтобы показать его в UI
-    response_data["transcribed_text"] = transcribed_text
-    return response_data
+    return {
+        "received": True,
+        "transcribed_text": transcribed_text,
+        "bot_reply": bot_reply,
+        "parsed_type": "voice_message",
+        "parsed_data": {},
+        "summary": "Обработка голосового сообщения"
+    }

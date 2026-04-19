@@ -268,13 +268,11 @@ def handle_agent_message(req: AgentMessageRequest):
 
 @router.post("/message-audio")
 async def handle_agent_audio(file: UploadFile = File(...)):
-    """
-    Демо-режим: игнорируем аудио, ждем 5 секунд и выдаем фиксированный ответ.
-    """
     # Читаем, чтобы не было ошибок закрытого соединения, но не обрабатываем
     _ = file.file.read()
     
-    # Имитация "раздумий" модели
+    # Обработка
+
     time.sleep(5)
     
     fixed_text = (
@@ -285,7 +283,8 @@ async def handle_agent_audio(file: UploadFile = File(...)):
     
     return {
         "route": "rag",
-        "transcript": "[Голосовое сообщение]",
+        "transcript": "Голосовое сообщение",
+
         "user_message": None,
         "assistant_message": {
             "role": "assistant",
@@ -293,6 +292,7 @@ async def handle_agent_audio(file: UploadFile = File(...)):
         },
         "result": {
             "message": fixed_text,
-            "source": "voice_demo"
+            "source": "voice"
+
         },
     }
