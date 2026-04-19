@@ -280,8 +280,16 @@ def create_scheduler() -> AsyncIOScheduler:
         scheduler.add_job(
             collect_wa_incidents,
             "cron",
-            minute="*/30",
+            minute="*/5",
             id="wa_incidents",
+        )
+        # Также проверяем посещаемость чаще в утренние часы (с 8 до 11 каждые 5 минут)
+        scheduler.add_job(
+            collect_wa_attendance,
+            "cron",
+            hour="8-10",
+            minute="*/5",
+            id="wa_attendance_realtime",
         )
     if is_telegram_scheduler_enabled():
         scheduler.add_job(
