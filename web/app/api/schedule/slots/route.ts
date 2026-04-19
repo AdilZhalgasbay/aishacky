@@ -39,3 +39,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: msg, slots: [] }, { status: 500 })
   }
 }
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json()
+    const { id, day_of_week, period } = body
+
+    if (!id || day_of_week === undefined || period === undefined) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    const { data, error } = await sb
+      .from('schedule_slots')
+      .update({ day_of_week, period })
+      .eq('id', id)
+      .select()
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, slot: data[0] })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Unknown error'
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+}

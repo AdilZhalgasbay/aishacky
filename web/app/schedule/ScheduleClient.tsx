@@ -3,6 +3,20 @@ import React, { useState, useMemo } from 'react'
 import { Calendar, RefreshCw, Users, CalendarX2, Settings, LayoutGrid, UserCheck, CheckCircle2, Loader2, Sparkles } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+} from '@dnd-kit/core'
+import { useDraggable } from '@dnd-kit/core'
+import { useDroppable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 
 // ─── Types ───────────────────────────────────────────────────────
 interface Substitution {
@@ -78,7 +92,77 @@ function WeeklyGrid({ slots, viewMode, selectedId, employees, classes, substMap,
   classes: ClassInfo[]
   substMap: SubstMap
   todayDow: number
+  onMoveSuccess: (slotId: string, day: number, period: number) => void
+  teacherStrainMap: Set<string>
+  allSlots: SlotJoined[]
+  activeSlot?: SlotJoined
+  getConflicts: (slot: SlotJoined, day: number, period: number) => string[]
 }) {
+  // ─── Internal Draggable/Droppable ─────────────────────────────
+  function DraggableLesson({ slot, color, colorHex, isStrained }: { slot: SlotJoined, color: string, colorHex: string, isStrained?: boolean }) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+      id: `lesson-${slot.id}`,
+      data: { type: 'lesson', slot }
+    })
+    
+    const style = {
+      transform: CSS.Translate.toString(transform),
+      opacity: isDragging ? 0.4 : 1,
+      background: `${colorHex}18`,
+      border: isStrained ? `2px solid #ef4444` : `1px solid ${colorHex}44`,
+      borderLeft: isStrained ? `4px solid #ef4444` : `3px solid ${colorHex}`,
+      borderRadius: 6,
+      padding: '5px 7px',
+      marginBottom: 3,
+      cursor: 'grab',
+      transition: 'transform 0.1s, border 0.2s',
+      boxShadow: isStrained ? '0 0 8px #ef444444' : 'none',
+    }
+
+    return (
+      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+        {isStrained && (
+          <div style={{ fontSize: 8, fontWeight: 900, color: '#fff', background: '#ef4444', padding: '1px 4px', borderRadius: 4, display: 'inline-block', marginBottom: 2 }}>
+            ПЕРЕГРУЗКА
+          </div>
+        )}
+        <div style={{ fontSize: 11, fontWeight: 800, color: colorHex, lineHeight: 1.2 }}>
+          {slot.subjects?.short_name || slot.subjects?.name || '—'}
+        </div>
+        {viewMode !== 'teacher' && slot.employees && (
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {slot.employees.name.split(' ')[0]}
+          </div>
+        )}
+        {viewMode !== 'class' && slot.classes && (
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{slot.classes.name}</div>
+        )}
+        {slot.rooms && <div style={{ fontSize: 9, color: 'var(--text-light)', marginTop: 2 }}>каб.{slot.rooms.number}</div>}
+        {slot.slot_type === 'lenta' && (
+          <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: colorHex, padding: '2px 4px', borderRadius: 4, display: 'inline-block', marginTop: 3 }}>ЛЕНТА</div>
+        )}
+      </div>
+    )
+  }
+
+  function DroppableSlot({ day, period, children, isConflict }: { day: number, period: number, children: React.ReactNode, isConflict: boolean }) {
+    const { isOver, setNodeRef } = useDroppable({
+      id: `slot-${day}-${period}`,
+      data: { day, period }
+    })
+
+    const style = {
+      padding: 4, verticalAlign: 'top',
+      borderBottom: '1px solid var(--border)',
+      borderLeft: '1px solid var(--border)',
+      minHeight: 70,
+      background: isOver ? (isConflict ? '#fee2e2' : '#dcfce7') : 'transparent',
+      transition: 'background 0.2s',
+    }
+
+    return <td ref={setNodeRef} style={style}>{children}</td>
+  }
+
   // Build a map: day -> period -> slot[]
   const grid = useMemo(() => {
     const filtered = selectedId
@@ -170,18 +254,15 @@ function WeeklyGrid({ slots, viewMode, selectedId, employees, classes, substMap,
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{PERIOD_TIMES[period]}</div>
               </td>
               {/* Day cells */}
-              {[1,2,3,4,5].map(day => {
+              {[1, 2, 3, 4, 5].map(day => {
                 const cellSlots = grid[day][period]
+                const conflicts = activeSlot ? getConflicts(activeSlot, day, period) : []
+                const isConflict = conflicts.length > 0
+
                 return (
-                  <td key={day} style={{
-                    padding: 4, verticalAlign: 'top',
-                    borderBottom: '1px solid var(--border)',
-                    borderLeft: '1px solid var(--border)',
-                    minHeight: 70,
-                  }}>
+                  <DroppableSlot key={day} day={day} period={period} isConflict={isConflict}>
                     {cellSlots.length === 0 ? (
                       <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {/* Today's substitution overlay for empty cells (view by class) */}
                         {viewMode === 'class' && day === todayDow && (() => {
                           const selectedClass = classes.find(c => c.id === selectedId)
                           const sub = selectedClass ? substMap.get(`${selectedClass.name}:${period}`) : undefined
@@ -197,54 +278,17 @@ function WeeklyGrid({ slots, viewMode, selectedId, employees, classes, substMap,
                         {(viewMode !== 'class' || day !== todayDow) && <div style={{ width: 20, height: 1, background: 'var(--border)' }} />}
                       </div>
                     ) : (
-                      cellSlots.map(slot => {
-                        const subj = slot.subjects
-                        const color = getSubjectColor(subj?.name || '')
-                        return (
-                          <div key={slot.id} style={{
-                            background: `${color}18`,
-                            border: `1px solid ${color}44`,
-                            borderLeft: `3px solid ${color}`,
-                            borderRadius: 6,
-                            padding: '5px 7px',
-                            marginBottom: cellSlots.length > 1 ? 3 : 0,
-                            cursor: 'default',
-                            transition: 'transform 0.1s',
-                          }}
-                            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.02)')}
-                            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-                          >
-                            <div style={{ fontSize: 11, fontWeight: 800, color, lineHeight: 1.2 }}>
-                              {subj?.short_name || subj?.name || '—'}
-                            </div>
-                            {viewMode !== 'teacher' && slot.employees && (
-                              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {slot.employees.name.split(' ')[0]}
-                              </div>
-                            )}
-                            {viewMode !== 'class' && slot.classes && (
-                              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                                {slot.classes.name}
-                              </div>
-                            )}
-                            {slot.rooms && (
-                              <div style={{ fontSize: 9, color: 'var(--text-light)', marginTop: 2 }}>
-                                каб.{slot.rooms.number}
-                              </div>
-                            )}
-                            {slot.is_substitute && (
-                              <div style={{ fontSize: 9, fontWeight: 700, color: '#f59e0b', marginTop: 2 }}>ЗАМЕНА</div>
-                            )}
-                            {slot.slot_type === 'lenta' && (
-                              <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: color, padding: '2px 4px', borderRadius: 4, display: 'inline-block', marginTop: 3 }}>
-                                ЛЕНТА
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })
+                      cellSlots.map(slot => (
+                        <DraggableLesson 
+                          key={slot.id} 
+                          slot={slot} 
+                          color={getSubjectColor(slot.subjects?.name || '')} 
+                          colorHex={getSubjectColor(slot.subjects?.name || '')} 
+                          isStrained={slot.employees?.id && teacherStrainMap.has(`${slot.employees.id}:${day}:${period}`)}
+                        />
+                      ))
                     )}
-                  </td>
+                  </DroppableSlot>
                 )
               })}
             </tr>
@@ -297,6 +341,96 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'all'>('class')
   const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '')
   const [selectedTeacherId, setSelectedTeacherId] = useState('')
+  const [localSlots, setLocalSlots] = useState<SlotJoined[]>(slots)
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const activeSlot = useMemo(() => activeId ? localSlots.find(s => `lesson-${s.id}` === activeId) : null, [activeId, localSlots])
+
+  // Sensors for DND
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  // Heatmap: Teacher Strain Map (6+ consecutive lessons)
+  const teacherStrainMap = useMemo(() => {
+    const map = new Set<string>()
+    const teachersDays: Record<string, Record<number, number[]>> = {}
+    localSlots.forEach(s => {
+      if (!s.employees?.id) return
+      if (!teachersDays[s.employees.id]) teachersDays[s.employees.id] = {}
+      if (!teachersDays[s.employees.id][s.day_of_week]) teachersDays[s.employees.id][s.day_of_week] = []
+      teachersDays[s.employees.id][s.day_of_week].push(s.period)
+    })
+    Object.entries(teachersDays).forEach(([tId, days]) => {
+      Object.entries(days).forEach(([day, periods]) => {
+        const sorted = periods.sort((a, b) => a - b)
+        let streak: number[] = []
+        for (let i = 0; i < sorted.length; i++) {
+          if (i === 0 || sorted[i] === sorted[i - 1] + 1) streak.push(sorted[i])
+          else {
+            if (streak.length >= 6) streak.forEach(p => map.add(`${tId}:${day}:${p}`))
+            streak = [sorted[i]]
+          }
+        }
+        if (streak.length >= 6) streak.forEach(p => map.add(`${tId}:${day}:${p}`))
+      })
+    })
+    return map
+  }, [localSlots])
+
+  // Conflict Validator
+  function getConflicts(slot: SlotJoined, toDay: number, toPeriod: number) {
+    const errs: string[] = []
+    const tId = slot.employees?.id
+    const cId = slot.classes?.id
+    const rId = slot.rooms?.id
+
+    localSlots.forEach(s => {
+      if (s.id === slot.id) return
+      if (s.day_of_week === toDay && s.period === toPeriod) {
+        if (tId && s.employees?.id === tId) errs.push(`Учитель ${s.employees.name} уже занят`)
+        if (cId && s.classes?.id === cId)   errs.push(`Класс ${s.classes.name} уже занят`)
+        if (rId && s.rooms?.id === rId)     errs.push(`Кабинет ${s.rooms.number} уже занят`)
+      }
+    })
+    return errs
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string)
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null)
+    const { active, over } = event
+    if (!over) return
+
+    const slot = active.data.current?.slot as SlotJoined
+    const { day: toDay, period: toPeriod } = over.data.current as { day: number, period: number }
+
+    if (slot.day_of_week === toDay && slot.period === toPeriod) return
+
+    const errs = getConflicts(slot, toDay, toPeriod)
+    if (errs.length > 0) {
+      showToast(errs.join('. '), 'error')
+      return
+    }
+
+    // Optimistic Update
+    const oldSlots = [...localSlots]
+    setLocalSlots(prev => prev.map(s => s.id === slot.id ? { ...s, day_of_week: toDay, period: toPeriod } : s))
+
+    try {
+      const res = await fetch('/api/schedule/slots', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: slot.id, day_of_week: toDay, period: toPeriod })
+      })
+      if (!res.ok) throw new Error('Ошибка сохранения')
+      showToast('Расписание обновлено', 'success')
+    } catch (err) {
+      showToast(getErr(err), 'error')
+      setLocalSlots(oldSlots)
+    }
+  }
 
   const teachers = employees.filter(e => e.role === 'teacher')
 
@@ -338,11 +472,11 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
   // Slots filtered for current view
   const gridSlots = useMemo(() => {
     if (viewMode === 'class' && selectedClassId)
-      return slots.filter(s => s.classes?.id === selectedClassId)
+      return localSlots.filter(s => s.classes?.id === selectedClassId)
     if (viewMode === 'teacher' && selectedTeacherId)
-      return slots.filter(s => s.employees?.id === selectedTeacherId)
-    return slots
-  }, [slots, viewMode, selectedClassId, selectedTeacherId])
+      return localSlots.filter(s => s.employees?.id === selectedTeacherId)
+    return localSlots
+  }, [localSlots, viewMode, selectedClassId, selectedTeacherId])
 
   const selectedId = viewMode === 'class' ? selectedClassId : viewMode === 'teacher' ? selectedTeacherId : ''
 
@@ -516,15 +650,27 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
 
           {/* Weekly grid */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <WeeklyGrid
-              slots={gridSlots}
-              viewMode={viewMode}
-              selectedId={selectedId}
-              employees={employees}
-              classes={classes}
-              substMap={substMap}
-              todayDow={todayDow}
-            />
+            <DndContext 
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <WeeklyGrid
+                slots={gridSlots}
+                viewMode={viewMode}
+                selectedId={selectedId}
+                employees={employees}
+                classes={classes}
+                substMap={substMap}
+                todayDow={todayDow}
+                onMoveSuccess={() => {}}
+                teacherStrainMap={teacherStrainMap}
+                allSlots={localSlots}
+                activeSlot={activeSlot || undefined}
+                getConflicts={getConflicts}
+              />
+            </DndContext>
           </div>
 
           {/* Heatmap legend */}
