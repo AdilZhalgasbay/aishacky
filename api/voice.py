@@ -48,7 +48,7 @@ def get_system_prompt() -> str:
 def parse_tasks_from_text(text: str) -> list[dict]:
     """
     Парсит текстовую команду директора в список задач.
-    Используется когда текст уже транскрибирован (или директор печатает).
+    Используется когда директор печатает текст.
     """
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -78,100 +78,6 @@ def parse_tasks_from_text(text: str) -> list[dict]:
     raw = raw.strip()
 
     return json.loads(raw)
-
-
-def parse_tasks_from_audio(audio_bytes: bytes, mime_type: str = "audio/wav") -> list[dict]:
-    """
-    Парсит аудио-команду директора в список задач.
-    Принимает байты аудио файла (WAV/MP3/OGG).
-    Использует multimodal audio_url content type gemma-3n.
-    """
-    b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-    data_uri = f"data:{mime_type};base64,{b64_audio}"
-
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {"role": "system", "content": get_system_prompt()},
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "audio_url",
-                        "audio_url": {"url": data_uri},
-                    },
-                    {
-                        "type": "text",
-                        "text": "Извлеки задачи из этого голосового сообщения. Верни JSON-массив задач.",
-                    },
-                ],
-            },
-        ],
-        "max_tokens": 1024,
-        "temperature": 0.2,
-        "stream": False,
-    }
-
-    response = requests.post(INVOKE_URL, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()
-    raw = response.json()["choices"][0]["message"]["content"].strip()
-
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
-
-    return json.loads(raw)
-
-
-def transcribe_audio(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
-    """
-    Транскрибирует аудио-файл в текст без генерации JSON-структуры.
-    """
-    b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-    data_uri = f"data:{mime_type};base64,{b64_audio}"
-
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {"role": "system", "content": "Ты высокоточный транскрибатор. Тонко и точно конвертируй аудио в текст на русском языке. Возвращай только распознанный текст без каких-либо твоих комментариев."},
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "audio_url",
-                        "audio_url": {"url": data_uri},
-                    },
-                    {
-                        "type": "text",
-                        "text": "Распознай текст из этого аудио.",
-                    },
-                ],
-            },
-        ],
-        "max_tokens": 1024,
-        "temperature": 0.0,
-        "stream": False,
-    }
-
-    try:
-        response = requests.post(INVOKE_URL, headers=headers, json=payload, timeout=60)
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        print(f"[VOICE] Transcription error: {e}")
-        return "Ошибка распознавания голоса"
 
 
 # ─── Быстрый тест ────────────────────────────────────────────────────────────

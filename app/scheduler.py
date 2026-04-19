@@ -189,22 +189,22 @@ async def collect_wa_attendance():
             result = response.json()
 
             # ТЗ: Автоматически отправить завстоловой
-            print("  🍽️ Авто-уведомление в столовую...")
+            print("  [FOOD] Авто-уведомление в столовую...")
             await client.patch(f"{get_api_base()}/attendance")
 
         print(
-            f"  ✅ Порций: {result.get('total_portions', '?')}, "
+            f"  [OK] Порций: {result.get('total_portions', '?')}, "
             f"отсутствуют: {result.get('total_absent', '?')}"
         )
 
 
     except Exception as exc:
-        print(f"  ❌ Ошибка сбора посещаемости: {exc}")
+        print(f"  [ERROR] Ошибка сбора посещаемости: {exc}")
 
 
 async def collect_wa_incidents():
     """Каждые 30 минут: проверяем новые сообщения на наличие инцидентов."""
-    print(f"[{datetime.now().strftime('%H:%M')}] 🔍 Проверка инцидентов в WhatsApp...")
+    print(f"[{datetime.now().strftime('%H:%M')}] [SEARCH] Проверка инцидентов в WhatsApp...")
 
     if not _bootstrap_ready():
         return

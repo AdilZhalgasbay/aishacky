@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
+import time
 from fastapi import APIRouter, File, UploadFile
 from pydantic import BaseModel
 
 from api.llm import chat_json
-from api.voice import transcribe_audio, parse_tasks_from_text
+from api.voice import parse_tasks_from_text
 from app import state_store
 from app.message_router import auto_route_message
 from app.notifications import notify_task_assignee, send_whatsapp
@@ -266,23 +267,32 @@ def handle_agent_message(req: AgentMessageRequest):
     return _handle_director_message(req.text, source="text")
 
 @router.post("/message-audio")
-def handle_agent_audio(file: UploadFile = File(...)):
-    audio_bytes = file.file.read()
-    mime = file.content_type or "audio/webm"
-    text = transcribe_audio(audio_bytes, mime_type=mime)
-
-    if not text or "Ошибка" in text:
-        return {
-            "route": "general",
-            "transcript": "",
-            "user_message": None,
-            "assistant_message": {
-                "role": "assistant",
-                "message_text": "Не удалось распознать голосовое сообщение. Попробуйте ещё раз или напишите текстом.",
-            },
-            "result": {"message": "Не удалось распознать голосовое сообщение."},
-        }
-
-    payload = _handle_director_message(text, source="voice")
-    payload["transcript"] = text
-    return payload
+async def handle_agent_audio(file: UploadFile = File(...)):
+    """
+    Демо-режим: игнорируем аудио, ждем 5 секунд и выдаем фиксированный ответ.
+    """
+    # Читаем, чтобы не было ошибок закрытого соединения, но не обрабатываем
+    _ = file.file.read()
+    
+    # Имитация "раздумий" модели
+    time.sleep(5)
+    
+    fixed_text = (
+        "Заболевший должен быть немедленно изолирован в медицинском кабинете школы. "
+        "На время карантина доступ ребенка в учебное заведение полностью прекращается. "
+        "Возвращение к занятиям станет возможным только после предъявления медицинской справки от врача."
+    )
+    
+    return {
+        "route": "rag",
+        "transcript": "[Голосовое сообщение]",
+        "user_message": None,
+        "assistant_message": {
+            "role": "assistant",
+            "message_text": fixed_text,
+        },
+        "result": {
+            "message": fixed_text,
+            "source": "voice_demo"
+        },
+    }

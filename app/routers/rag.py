@@ -15,8 +15,27 @@ class RagRequest(BaseModel):
     query: str
     top_k: int = 3
 
+# Keyword map: unique markers in each .txt file → (doc_name, doc_number, filename)
+DOC_KEYWORDS: list[tuple[list[str], str, str, str]] = [
+    (["№76", "76 ", "дсм-76", "продолжительность урока", "площадь", "освещенность", "температура"], "Приказ МЗ РК", "ҚР ДСМ-76", "prikaz_76.txt"),
+    (["№110", "110 ", "инфекцион", "заболев", "карантин", "эпидеми", "изоляц"], "Приказ МЗ РК", "110", "prikaz_110.txt"),
+    (["№130", "130 ", "595", "типовые правила", "учебная нагрузка", "замена", "квалификационн", "директор"], "Приказ МОН РК", "595", "prikaz_130.txt"),
+]
+
 @router.post("/query")
 def rag_query(req: RagRequest):
+    query_lower = req.query.lower()
+    
+    # 1. Проверка на запрос списка приказов
+    list_keywords = ["какие приказы", "список приказов", "дай список", "что у нас есть", "какие документы", "выведи список"]
+    if any(kw in query_lower for kw in list_keywords):
+        docs_str = "\n".join([f"• {d[1]} №{d[2]} ({d[3]})" for d in DOC_KEYWORDS])
+        return {
+            "answer": f"В базе RAG доступны следующие приказы:\n{docs_str}\n\nВы можете задать любой вопрос по их содержанию.",
+            "sources": []
+        }
+
+    # 2. Обычный RAG поиск
     results = rag_store.search(req.query, top_k=req.top_k)
 
     if not results:
@@ -34,17 +53,11 @@ def rag_query(req: RagRequest):
 Дай чёткий, понятный ответ. Если нужен чек-лист — используй пронумерованный список."""
 
     answer = chat(SYSTEM, prompt, max_tokens=1024)
-    # Keyword map: unique markers in each .txt file → (doc_name, doc_number)
-    DOC_KEYWORDS: list[tuple[list[str], str, str]] = [
-        (["№76", "76 ", "дсм-76", "продолжительность урока", "площадь", "освещенность", "температура"], "Приказ МЗ РК", "ҚР ДСМ-76"),
-        (["№110", "110 ", "инфекцион", "заболев", "карантин", "эпидеми", "изоляц"], "Приказ МЗ РК", "110"),
-        (["№130", "130 ", "595", "типовые правила", "учебная нагрузка", "замена", "квалификационн", "директор"], "Приказ МОН РК", "595"),
-    ]
 
     def _detect_doc(text: str) -> tuple[str, str]:
-        text_lower = text.lower()
-        for keywords, doc_name, doc_number in DOC_KEYWORDS:
-            if any(kw.lower() in text_lower for kw in keywords):
+        text_l = text.lower()
+        for keywords, doc_name, doc_number, fname in DOC_KEYWORDS:
+            if any(kw.lower() in text_l for kw in keywords):
                 return doc_name, doc_number
         return "Нормативный документ", "—"
 

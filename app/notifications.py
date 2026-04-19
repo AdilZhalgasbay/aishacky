@@ -37,15 +37,15 @@ def send_whatsapp(text: str) -> bool:
             timeout=20,
         )
         if response.status_code == 200:
-            print(f"[WA] ✅ Sent to '{group}': {text[:60]}")
+            print(f"[WA] [OK] Sent to '{group}': {text[:60]}")
             return True
         
         # Подробный лог ошибки
         error_info = response.text[:200]
-        print(f"[WA] ⚠️ Ошибка отправки (код {response.status_code}): {error_info}")
+        print(f"[WA] [WARN] Ошибка отправки (код {response.status_code}): {error_info}")
         return False
     except Exception as exc:
-        print(f"[WA] ❌ Ошибка соединения с ботом: {exc}")
+        print(f"[WA] [ERROR] Ошибка соединения с ботом: {exc}")
         return False
 
 

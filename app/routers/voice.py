@@ -1,7 +1,7 @@
 """app/routers/voice.py — POST /voice/parse-tasks"""
 from fastapi import APIRouter, UploadFile, File
 from pydantic import BaseModel
-from api.voice import parse_tasks_from_text, parse_tasks_from_audio
+from api.voice import parse_tasks_from_text
 from app import state_store
 from app.notifications import notify_task_assignee
 from app.routers import rag
@@ -52,10 +52,6 @@ def parse_tasks_text(req: VoiceTextRequest):
     return {"tasks": created, "count": len(created)}
 
 @router.post("/parse-tasks-audio")
-def parse_tasks_audio(file: UploadFile = File(...)):
-    """Парсинг голосового файла директора в задачи."""
-    audio_bytes = file.file.read()
-    mime = file.content_type or "audio/wav"
-    tasks = parse_tasks_from_audio(audio_bytes, mime_type=mime)
-    created = _create_tasks_with_notifications(tasks, source="voice")
-    return {"tasks": created, "count": len(created)}
+def parse_tasks_audio_stub(file: UploadFile = File(...)):
+    """Заглушка для голосового файла (функция отключена)."""
+    return {"tasks": [], "count": 0, "message": "Голосовой парсинг в этом эндпоинте отключен. Используйте /agent/message-audio."}
