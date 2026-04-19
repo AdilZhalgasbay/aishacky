@@ -12,43 +12,64 @@ SYSTEM = """Ты — AI-ассистент директора школы.
 Из сообщений учителей извлеки данные посещаемости по каждому классу.
 Верни строго JSON без пояснений."""
 
-# Паттерн класса: 1А, 8С, 11Б и т.д.
+# Паттерн класса: 1А, 8С, 11Б, 9А класс и т.д.
 _CLASS_RE = re.compile(r'\b(\d{1,2}[А-ЯA-Zа-яa-z]{1,2})\b', re.IGNORECASE)
-# Числа рядом с "пришли/присутствуют"
-_PRESENT_RE = re.compile(r'(\d+)\s*(?:ученик[а-я]*|чел(?:овек)?[а-я]*)?\s*(?:пришли?|присутств\w*)', re.IGNORECASE)
-# Числа рядом с "отсутствуют" или "нет"
-_ABSENT_RE  = re.compile(r'(\d+)\s*(?:ученик[а-я]*|чел(?:овек)?[а-я]*)?\s*(?:отсутств\w*|нет\b)', re.IGNORECASE)
+
+# Вспомогательные паттерны для регулярных выражений
+_STU_KW = r'(?:ученик[а-я]*|чел(?:овек)?[а-я]*|дет[а-я]*|реб[а-я]*)'
+_PRESENT_KW = r'(?:пришли?|присутств\w*|в школе|на уроке)'
+_ABSENT_KW = r'(?:отсутств\w*|отсутсв\w*|нет\b|болеют\w*|дома|болен|ола)'
+_TOTAL_KW = r'(?:всего|в классе|комплект)'
+
+# Новые робастные регулярки
+_PRESENT_RE = re.compile(rf'({_PRESENT_KW}\s*(\d+)|(\d+)\s*{_PRESENT_KW})', re.IGNORECASE)
+_ABSENT_RE  = re.compile(rf'({_ABSENT_KW}\s*(\d+)|(\d+)\s*{_ABSENT_KW})', re.IGNORECASE)
+_TOTAL_RE   = re.compile(rf'({_TOTAL_KW}\s*(\d+)|(\d+)\s*{_TOTAL_KW}|(\d+)\s*{_STU_KW})', re.IGNORECASE)
 
 
 def _regex_parse(messages: list[str], today: str) -> dict | None:
     """
-    Быстрый разбор без LLM. Работает для сообщений вида:
-    '8С 22 ученика пришли, 2 ученика отсутствуют'
-    '11А: 25/2'
+    Быстрый разбор без LLM. Работает для сообщений различных форматов.
     """
     classes = []
     total_present = 0
     total_absent = 0
 
     for msg in messages:
-        # убираем префикс типа "Директор: "
+        # убираем префикс типа "Учитель: "
         text = re.sub(r'^\w[\w ]+:\s*', '', msg).strip()
         class_m = _CLASS_RE.search(text)
         if not class_m:
             continue
 
         class_name = class_m.group(1).upper()
-        present_m = _PRESENT_RE.search(text)
-        absent_m  = _ABSENT_RE.search(text)
+        # Текст без названия класса для чистоты поиска цифр
+        clean_text = text.replace(class_m.group(0), "", 1)
+        
+        present_m = _PRESENT_RE.search(clean_text)
+        absent_m  = _ABSENT_RE.search(clean_text)
+        total_m   = _TOTAL_RE.search(clean_text)
 
-        present = int(present_m.group(1)) if present_m else 0
-        absent  = int(absent_m.group(1))  if absent_m  else 0
+        present = 0
+        if present_m:
+            present = int(present_m.group(2) or present_m.group(3))
+            
+        absent = 0
+        if absent_m:
+            absent = int(absent_m.group(2) or absent_m.group(3))
 
-        # Формат "8С 22/2" или "8С: 22, 2"
+        # Логика: если есть "всего/детей" и "отсутствуют", но нет "присутствуют"
+        if total_m and absent and not present:
+            total_val = int(total_m.group(2) or total_m.group(3) or total_m.group(4))
+            # Проверка, что это не число самого класса
+            if str(total_val) != class_name and str(total_val) != class_name[:-1]:
+                if total_val >= absent:
+                    present = total_val - absent
+
+        # Фолбэк на простые числа, если ничего не нашли по ключам
         if not present and not absent:
-            nums = re.findall(r'\d+', text)
-            # Пропускаем число-часть имени класса
-            nums = [n for n in nums if not class_m.group(1).startswith(n)]
+            nums = re.findall(r'\d+', clean_text)
+            # убираем числа, которые могут быть частью имени класса (уже почистили clean_text, но на всякий случай)
             if len(nums) >= 2:
                 present, absent = int(nums[0]), int(nums[1])
             elif len(nums) == 1:

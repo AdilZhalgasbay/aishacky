@@ -11,7 +11,7 @@ from api.llm import chat_json
 from api.voice import transcribe_audio, parse_tasks_from_text
 from app import state_store
 from app.message_router import auto_route_message
-from app.notifications import notify_task_assignee
+from app.notifications import notify_task_assignee, send_whatsapp
 from app.routers.incidents import IncidentRequest, parse_incident
 from app.routers import rag
 from app.routers.rag import RagRequest, rag_query
@@ -100,16 +100,7 @@ def _classify_intent(text: str) -> str:
         "свет",
     ]
     attendance_keywords = [
-        "детей",
-        "болеют",
-        "болеет",
-        "присутствуют",
-        "отсутствуют",
-        "порций",
-        "питание",
-        "ученика",
-        "человек",
-        "классе",
+        "детей", "присутствуют", "болеют", "присутствует", "отсутствуют", "человек", "питание", "порции", "порций", "на уроке", "ученика", "ребенка", "ребенок", "классе"
     ]
     staff_keywords = [
         "сотрудник",
@@ -170,8 +161,10 @@ def _assistant_text_for_result(route: str, result: dict[str, Any]) -> str:
             f"Ответственный: {result.get('assignee') or 'не назначен'}."
         )
     if route == "attendance":
+        # Check if actually notified
+        notif = "отправлено в WhatsApp" if "whatsapp" in (result.get("notified_channels") or []) else "ошибка отправки WhatsApp"
         return (
-            f"Посещаемость собрана. Порций: {result.get('total_portions', 0)}, "
+            f"Посещаемость собрана ({notif}). Порций: {result.get('total_portions', 0)}, "
             f"отсутствуют: {result.get('total_absent', 0)}."
         )
     if route == "substitution":
@@ -184,7 +177,8 @@ def _assistant_text_for_result(route: str, result: dict[str, Any]) -> str:
                 f"{sub.get('class_name') or 'класс'} {sub.get('period')}-й урок: "
                 f"{sub.get('substitute_name') or 'нет замены'}"
             )
-        return "Замены подготовлены и отправлены в WhatsApp. " + " | ".join(preview)
+        notif = "Замены подготовлены и отправлены в WhatsApp. " if result.get("notified") else "Замены подготовлены, но WhatsApp недоступен. "
+        return notif + " | ".join(preview)
     if route == "task":
         tasks = result.get("tasks") or []
         if not tasks:
@@ -219,9 +213,15 @@ def _handle_director_message(text: str, *, source: str) -> dict[str, Any]:
             result = parse_incident(IncidentRequest(message=text, sender="Директор"))
         elif route == "attendance":
             parsed_type, parsed_result = auto_route_message(text, "Директор")
-            if parsed_type != "attendance":
-                parsed_result = None
-            result = parsed_result or {"message": "Не удалось распознать сообщение как посещаемость."}
+            if parsed_type == "attendance" and parsed_result:
+                # Trigger actual notification
+                from app.message_router import format_result
+                summary = format_result(parsed_result, "Агент (Директор)")
+                sent = send_whatsapp(summary)
+                parsed_result["notified_channels"] = ["whatsapp"] if sent else []
+                result = parsed_result
+            else:
+                result = {"message": "Не удалось распознать сообщение как посещаемость."}
         elif route == "substitution":
             result = find_substitute(SubstituteRequest(message=text))
         elif route == "rag":

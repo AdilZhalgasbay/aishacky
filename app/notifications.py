@@ -21,7 +21,8 @@ PRIORITY_LABEL = {
 
 
 def _wa_group() -> str:
-    return os.getenv("WA_GROUP_NAME", "Aqbobek Teachers")
+    # Захардкожено для надежности
+    return "Aqbobek Teachers"
 
 
 def send_whatsapp(text: str) -> bool:
@@ -33,15 +34,18 @@ def send_whatsapp(text: str) -> bool:
         response = httpx.post(
             f"{WA_BOT_URL}/send",
             json={"group_name": group, "message": text},
-            timeout=15,
+            timeout=20,
         )
         if response.status_code == 200:
             print(f"[WA] ✅ Sent to '{group}': {text[:60]}")
             return True
-        print(f"[WA] ⚠️ wa-bot {response.status_code}: {response.text[:100]}")
+        
+        # Подробный лог ошибки
+        error_info = response.text[:200]
+        print(f"[WA] ⚠️ Ошибка отправки (код {response.status_code}): {error_info}")
         return False
     except Exception as exc:
-        print(f"[WA] ❌ Error: {exc}")
+        print(f"[WA] ❌ Ошибка соединения с ботом: {exc}")
         return False
 
 
@@ -49,7 +53,7 @@ def notify_task_assignee(task: dict[str, Any]) -> dict[str, Any]:
     due_date = task.get("due_date") or "без срока"
     priority = PRIORITY_LABEL.get(task.get("priority"), task.get("priority") or "Средний")
     text = (
-        "📋 *Новая задача*\n"
+        "📋 Новая задача\n"
         f"👤 Исполнитель: {task.get('assigned_to_name') or '—'}\n"
         f"📝 {task.get('title') or task.get('description') or 'Без названия'}\n"
         f"⏰ Срок: {due_date}\n"
@@ -69,7 +73,7 @@ def notify_task_assignee(task: dict[str, Any]) -> dict[str, Any]:
 def notify_incident_assignee(incident: dict[str, Any]) -> dict[str, Any]:
     priority = PRIORITY_LABEL.get(incident.get("priority"), incident.get("priority") or "Средний")
     text = (
-        "🚨 *Новый инцидент*\n"
+        "🚨 Новый инцидент\n"
         f"📍 Место: {incident.get('location') or '—'}\n"
         f"🔧 Описание: {incident.get('description') or '—'}\n"
         f"⚡ Приоритет: {priority}"
@@ -85,12 +89,12 @@ def notify_substitution_assignee(substitution: dict[str, Any], target_chat_id: i
     """Send substitution notice to the WhatsApp group (target_chat_id ignored, kept for compat)."""
     substitute = substitution.get("substitute_name") or "..."
     text = (
-        f"🔄 *Замена учителя*\n"
-        f"📚 Класс: *{substitution.get('class_name') or '—'}*\n"
+        f"🔄 Замена учителя\n"
+        f"📚 Класс: {substitution.get('class_name') or '—'}\n"
         f"📖 Предмет: {substitution.get('subject') or '—'}\n"
         f"🏫 Кабинет: {substitution.get('room') or '—'}\n"
         f"👤 Отсутствует: {substitution.get('original_teacher_name') or '—'}\n"
-        f"✅ Заменяет: *{substitute}*"
+        f"✅ Заменяет: {substitute}"
     )
     sent = send_whatsapp(text)
     return {
@@ -123,9 +127,9 @@ def send_attendance_digest(
     total_absent = sum(row["absent_count"] for row in rows)
 
     lines = [
-        f"🍽️ *Посещаемость {target_date}*",
-        f"✅ Порций в столовую: *{total_portions}*",
-        f"❌ Отсутствуют: *{total_absent}*",
+        f"🍽️ Посещаемость {target_date}",
+        f"✅ Порций в столовую: {total_portions}",
+        f"❌ Отсутствуют: {total_absent}",
     ]
     for row in rows[:10]:
         lines.append(f"  • {row['class_name']}: {row['present_count']} / {row['present_count'] + row['absent_count']}")

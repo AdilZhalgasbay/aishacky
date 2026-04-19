@@ -319,7 +319,8 @@ def start_scheduler() -> AsyncIOScheduler:
         print(f"  💬 WhatsApp группа: {get_group_name()}")
         print(f"  🪟 Режим браузера: {'headless' if use_headless_browser() else 'visible'}")
         print("  ⏰ 09:00 — посещаемость WhatsApp → /parse-attendance")
-        print("  🔄 каждые 30 мин — инциденты WhatsApp → /parse-incident")
+        print("  🔄 каждые 5 мин — инциденты WhatsApp → /parse-incident")
+        print("  🌅 08:00–11:00 — утренний мониторинг WhatsApp каждые 5 мин")
     if is_telegram_scheduler_enabled():
         print("  ⏰ 09:00 — Telegram attendance logs → директор + столовая")
     return _scheduler

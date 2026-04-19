@@ -119,7 +119,9 @@ app.post('/send', async (req, res) => {
             c.name.toLowerCase().includes(group_name.toLowerCase())
         ));
         if (!target) {
-            return res.status(404).json({ error: `Group '${group_name}' not found` });
+            const allGroups = chats.filter(c => c.isGroup).map(c => c.name).join(', ');
+            console.warn(`[wa-bot] ⚠️ Group '${group_name}' not found. Available groups: ${allGroups}`);
+            return res.status(404).json({ error: `Group '${group_name}' not found. Available groups: ${allGroups}` });
         }
         await target.sendMessage(message);
         console.log(`[wa-bot] 📤 Sent to '${target.name}': ${message.substring(0, 60)}...`);
