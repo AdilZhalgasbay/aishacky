@@ -84,7 +84,20 @@ function getSubjectColor(name: string) {
 function getErr(e: unknown) { return e instanceof Error ? e.message : 'Ошибка' }
 
 // ─── WeeklyGrid ──────────────────────────────────────────────────
-function WeeklyGrid({ slots, viewMode, selectedId, employees, classes, substMap, todayDow }: {
+function WeeklyGrid({
+  slots,
+  viewMode,
+  selectedId,
+  employees,
+  classes,
+  substMap,
+  todayDow,
+  onMoveSuccess,
+  teacherStrainMap,
+  allSlots,
+  activeSlot,
+  getConflicts
+}: {
   slots: SlotJoined[]
   viewMode: 'class' | 'teacher' | 'all'
   selectedId: string
@@ -284,7 +297,7 @@ function WeeklyGrid({ slots, viewMode, selectedId, employees, classes, substMap,
                           slot={slot} 
                           color={getSubjectColor(slot.subjects?.name || '')} 
                           colorHex={getSubjectColor(slot.subjects?.name || '')} 
-                          isStrained={slot.employees?.id && teacherStrainMap.has(`${slot.employees.id}:${day}:${period}`)}
+                          isStrained={!!(slot.employees?.id && teacherStrainMap.has(`${slot.employees.id}:${day}:${period}`))}
                         />
                       ))
                     )}

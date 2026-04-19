@@ -39,15 +39,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Director info */}
-      <div className="sidebar-user">
-        <div className="sidebar-user-role">Директор</div>
-        <div className="sidebar-user-name">Айгуль Сейткали</div>
-        <div className="sidebar-user-status">
-          <span className="live-dot" />
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>В сети</span>
-        </div>
-      </div>
+
 
       {/* Navigation */}
       <nav className="sidebar-nav">
@@ -68,16 +60,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* AI badge */}
-      <div style={{ margin: '0 14px 14px', padding: '10px 14px', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Sparkles size={14} color="#A78BFA" />
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA' }}>AI powered</span>
-        </div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4, lineHeight: 1.4 }}>
-          Llama 3.3-70b · Gemma 3n · FAISS RAG
-        </div>
-      </div>
+
 
       {/* Footer */}
       <div className="sidebar-footer">
