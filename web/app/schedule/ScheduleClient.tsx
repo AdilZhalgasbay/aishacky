@@ -861,9 +861,19 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
             <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#166534', borderBottom: 'none', marginBottom: 8 }}>
               <Sparkles size={18} /> Умное составление расписания (AI)
             </h2>
-            <p style={{ color: '#166534', fontSize: 13, marginBottom: 16 }}>
-              Система проанализирует матрицы нагрузок, типы кабинетов и доступность учителей, чтобы составить оптимальное расписание без "окон" и накладок.
-            </p>
+            <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+              <p style={{ color: '#166534', fontSize: 13, flex: '1 1 300px', margin: 0 }}>
+                Система проанализирует матрицы нагрузок, типы кабинетов и доступность учителей, чтобы составить оптимальное расписание без "окон" и накладок.
+              </p>
+              <div style={{ background: '#fff', padding: '8px 12px', borderRadius: 8, border: '1px solid #bbf7d0', fontSize: 12 }}>
+                <div style={{ fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <CheckCircle2 size={14} /> Авто-обнаружение Лент
+                </div>
+                <div style={{ color: '#15803d', marginTop: 2 }}>
+                  English, Singapore Math — группируются автоматически
+                </div>
+              </div>
+            </div>
             
             {aiResultObj ? (
                <div style={{ padding: '16px', background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #bbf7d0' }}>
@@ -878,49 +888,77 @@ export default function ScheduleClient({ initialDate, substitutions, employees, 
                </div>
             ) : (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ background: '#16a34a', borderColor: '#15803d', display: 'flex', alignItems: 'center', gap: 8 }}
-                      disabled={aiGenerating}
-                      onClick={async () => {
-                        setAiGenerating(true)
-                        setAiProgress(10) // start progress
-                        
-                        // Start a fake progress bar so user feels the "AI thinking"
-                        let p = 10
-                        const intv = setInterval(() => {
-                           p += Math.floor(Math.random() * 10) + 2
-                           if (p < 90) setAiProgress(p)
-                        }, 500)
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ background: '#16a34a', borderColor: '#15803d', display: 'flex', alignItems: 'center', gap: 8 }}
+                        disabled={aiGenerating}
+                        onClick={async () => {
+                          setAiGenerating(true)
+                          setAiProgress(5)
+                          
+                          let p = 5
+                          const messages = [
+                            "Анализ сетки часов...",
+                            "Поиск параллельных уроков (Ленты)...",
+                            "Группировка профильных классов...",
+                            "Расстановка приоритетных Лент...",
+                            "Оптимизация окон учителей...",
+                            "Проверка вместимости кабинетов...",
+                            "Запись в базу данных..."
+                          ]
+                          
+                          let msgIdx = 0
+                          const intv = setInterval(() => {
+                            p += Math.floor(Math.random() * 5) + 1
+                            if (p < 95) {
+                              setAiProgress(p)
+                              if (p % 15 === 0) msgIdx = (msgIdx + 1) % messages.length
+                            }
+                          }, 600)
 
-                        try {
-                           const res = await fetch('/api/schedule/generate', { method: 'POST' })
-                           if (!res.ok) throw new Error('Ошибка генерации')
-                           const data = await res.json()
-                           
-                           clearInterval(intv)
-                           setAiProgress(100)
-                           setTimeout(() => {
-                             setAiGenerating(false)
-                             setAiResultObj({ msg: data.msg || 'Расписание успешно сгенерировано!' })
-                             router.refresh() // Reload data to show new grid
-                           }, 400)
-                        } catch (err) {
-                           clearInterval(intv)
-                           setAiGenerating(false)
-                           showToast(getErr(err), 'error')
-                        }
-                      }}
-                    >
-                      {aiGenerating ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />}
-                      {aiGenerating ? 'Анализ ограничений и запись в БД...' : 'Сгенерировать расписание'}
-                    </button>
-                    {aiGenerating && (
-                       <div style={{ flex: 1, height: 8, background: '#bbf7d0', borderRadius: 4, overflow: 'hidden' }}>
-                         <div style={{ height: '100%', background: '#16a34a', width: `${aiProgress}%`, transition: 'width 0.3s' }} />
-                       </div>
-                    )}
+                          try {
+                            const res = await fetch('/api/schedule/generate', { method: 'POST' })
+                            if (!res.ok) throw new Error('Ошибка генерации')
+                            const data = await res.json()
+                            
+                            clearInterval(intv)
+                            setAiProgress(100)
+                            setTimeout(() => {
+                              setAiGenerating(false)
+                              setAiResultObj({ msg: data.msg || 'Расписание успешно сгенерировано!' })
+                              router.refresh()
+                            }, 400)
+                          } catch (err) {
+                            clearInterval(intv)
+                            setAiGenerating(false)
+                            showToast(getErr(err), 'error')
+                          }
+                        }}
+                      >
+                        {aiGenerating ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />}
+                        {aiGenerating ? 'ИИ составляет расписание...' : 'Сгенерировать расписание'}
+                      </button>
+                      
+                      {aiGenerating && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#166534' }}>
+                              {aiProgress < 20 ? "Анализ сетки часов..." : 
+                               aiProgress < 40 ? "Поиск параллельных уроков (Ленты)..." :
+                               aiProgress < 60 ? "Группировка профильных классов..." :
+                               aiProgress < 85 ? "Расстановка Лент и оптимизация..." :
+                               "Завершение и сохранение..."}
+                            </span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#166534' }}>{aiProgress}%</span>
+                          </div>
+                          <div style={{ height: 8, background: '#bbf7d0', borderRadius: 4, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: '#16a34a', width: `${aiProgress}%`, transition: 'width 0.4s ease-out' }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </>
             )}

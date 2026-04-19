@@ -287,7 +287,7 @@ def create_scheduler() -> AsyncIOScheduler:
         scheduler.add_job(
             collect_wa_attendance,
             "cron",
-            hour="8-10",
+            hour="8-18",
             minute="*/5",
             id="wa_attendance_realtime",
         )
@@ -318,9 +318,9 @@ def start_scheduler() -> AsyncIOScheduler:
     if is_scheduler_enabled():
         print(f"  💬 WhatsApp группа: {get_group_name()}")
         print(f"  🪟 Режим браузера: {'headless' if use_headless_browser() else 'visible'}")
-        print("  ⏰ 09:00 — посещаемость WhatsApp → /parse-attendance")
-        print("  🔄 каждые 5 мин — инциденты WhatsApp → /parse-incident")
-        print("  🌅 08:00–11:00 — утренний мониторинг WhatsApp каждые 5 мин")
+        print("  ⏰ 08:00 - 19:00 — активный мониторинг WhatsApp (каждые 5 мин)")
+        print("  🔄 Сбор посещаемости: /parse-attendance")
+        print("  🔄 Поиск инцидентов: /parse-incident")
     if is_telegram_scheduler_enabled():
         print("  ⏰ 09:00 — Telegram attendance logs → директор + столовая")
     return _scheduler

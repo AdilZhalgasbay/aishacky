@@ -23,15 +23,28 @@ client.on('qr', (qr) => {
     console.log('\n[wa-bot] 📱 Отсканируйте этот QR-код в WhatsApp\n');
 });
 
+client.on('authenticated', () => {
+    console.log('[wa-bot] 🔑 Authenticated! Session is valid.');
+});
+
+client.on('auth_failure', (msg) => {
+    console.error('[wa-bot] ❌ Authentication failure:', msg);
+    isClientReady = false;
+});
+
+client.on('loading_screen', (percent, message) => {
+    console.log(`[wa-bot] ⌛ Loading: ${percent}% - ${message}`);
+});
+
 client.on('ready', () => {
     isClientReady = true;
     latestQR = null; // Clear QR once authenticated
-    console.log('[wa-bot] ✅ WhatsApp Client is ready!');
+    console.log('[wa-bot] ✅ WhatsApp Client is ready and listening!');
 });
 
-client.on('disconnected', () => {
+client.on('disconnected', (reason) => {
     isClientReady = false;
-    console.log('[wa-bot] ❌ WhatsApp Client disconnected');
+    console.log('[wa-bot] ❌ WhatsApp Client disconnected:', reason);
 });
 
 // Passively listen to all incoming and outgoing messages
@@ -40,8 +53,14 @@ client.on('message_create', async (msg) => {
         const chat = await msg.getChat();
         if (!chat.isGroup) return; // Only cache groups
         
-        const contact = await msg.getContact();
-        const senderName = contact.pushname || contact.name || contact.number || "Неизвестно";
+        let senderName = "Неизвестно";
+        try {
+            const contact = await msg.getContact();
+            senderName = contact.pushname || contact.name || contact.number || "Неизвестно";
+        } catch (contactError) {
+            console.warn("[wa-bot] Failed to get contact info, using ID fallback:", contactError.message);
+            senderName = msg.author || msg.from || "Неизвестно";
+        }
         const timestampDate = new Date(msg.timestamp * 1000);
         
         messageCache.push({
@@ -91,17 +110,29 @@ app.get('/messages', async (req, res) => {
 });
 
 app.get('/chats', async (req, res) => {
+    if (!client) {
+        return res.status(500).json({ error: 'WhatsApp client not initialized' });
+    }
+    if (!isClientReady) {
+        return res.status(503).json({ error: 'WhatsApp client is not ready yet', isReady: false });
+    }
     try {
         const chats = await client.getChats();
         const names = chats.map(c => ({name: c.name, isGroup: c.isGroup}));
         res.json({chats: names});
     } catch(e) {
+        console.error('[wa-bot] Chats error:', e);
         res.status(500).json({error: e.message});
     }
 });
 
 app.get('/status', (req, res) => {
-    res.json({ isReady: isClientReady, qr: latestQR });
+    res.json({ 
+        isReady: isClientReady, 
+        hasQR: latestQR !== null,
+        qr: latestQR,
+        cacheSize: messageCache.length
+    });
 });
 
 app.post('/send', async (req, res) => {
